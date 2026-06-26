@@ -3,6 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -16,22 +17,38 @@ import {
   saveUser,
   type AuthUser,
 } from "@/lib/auth";
+import { setUnauthorizedHandler } from "@/lib/authSession";
+import { isTokenExpired } from "@/utils/authToken";
+
+type LogoutOptions = {
+  sessionExpired?: boolean;
+};
 
 type AuthContextValue = {
   isAuthenticated: boolean;
   isAdmin: boolean;
   user: AuthUser | null;
   login: (response: LoginResponse) => void;
-  logout: () => void;
+  logout: (options?: LogoutOptions) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function readAuthState(): { user: AuthUser | null; isAuthenticated: boolean } {
   const token = getToken();
-  const user = getUser();
 
-  if (!token || !user) {
+  if (!token) {
+    return { user: null, isAuthenticated: false };
+  }
+
+  if (isTokenExpired(token)) {
+    clearAuth();
+    return { user: null, isAuthenticated: false };
+  }
+
+  const user = getUser();
+  if (!user) {
+    clearAuth();
     return { user: null, isAuthenticated: false };
   }
 
@@ -42,17 +59,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [authState, setAuthState] = useState(readAuthState);
 
+  const logout = useCallback(
+    (options?: LogoutOptions) => {
+      clearAuth();
+      setAuthState({ user: null, isAuthenticated: false });
+
+      if (options?.sessionExpired) {
+        navigate({ to: "/login", search: { session: "expired" } });
+        return;
+      }
+
+      navigate({ to: "/" });
+    },
+    [navigate],
+  );
+
   const login = useCallback((response: LoginResponse) => {
     saveToken(response.access_token);
     saveUser(response.user);
     setAuthState({ user: response.user, isAuthenticated: true });
   }, []);
 
-  const logout = useCallback(() => {
-    clearAuth();
-    setAuthState({ user: null, isAuthenticated: false });
-    navigate({ to: "/" });
-  }, [navigate]);
+  useEffect(() => {
+    setUnauthorizedHandler(() => logout({ sessionExpired: true }));
+    return () => setUnauthorizedHandler(null);
+  }, [logout]);
 
   const value = useMemo(
     () => ({

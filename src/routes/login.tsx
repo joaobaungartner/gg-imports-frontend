@@ -7,11 +7,13 @@ import { isValidEmail } from "@/lib/validators";
 
 type LoginSearch = {
   cadastro?: string;
+  session?: string;
 };
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): LoginSearch => ({
     cadastro: typeof search.cadastro === "string" ? search.cadastro : undefined,
+    session: typeof search.session === "string" ? search.session : undefined,
   }),
   component: LoginPage,
 });
@@ -19,7 +21,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { login: setAuth } = useAuth();
-  const { cadastro } = Route.useSearch();
+  const { cadastro, session } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
@@ -60,6 +62,12 @@ function LoginPage() {
             Acesse sua conta para acompanhar pedidos e comprar com mais facilidade.
           </p>
         </div>
+
+        {session === "expired" && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Sua sessão expirou. Faça login novamente.
+          </div>
+        )}
 
         {cadastro === "ok" && (
           <div className="mb-6 rounded-xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-4 py-3 text-sm text-[var(--color-brand-green)]">

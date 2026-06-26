@@ -1,5 +1,6 @@
 import { config } from "@/config/config";
 import { getToken } from "@/lib/auth";
+import { handleUnauthorized } from "@/lib/authSession";
 
 type ApiErrorBody = {
   detail?: string | { msg: string }[];
@@ -15,6 +16,10 @@ export class ApiError extends Error {
   }
 }
 
+function isLoginPath(path: string): boolean {
+  return path === "/auth/login" || path.startsWith("/auth/login?");
+}
+
 async function parseError(response: Response): Promise<string> {
   try {
     const body = (await response.json()) as ApiErrorBody;
@@ -28,21 +33,34 @@ async function parseError(response: Response): Promise<string> {
   return "Ocorreu um erro. Tente novamente.";
 }
 
+async function handleApiResponse(response: Response, path: string): Promise<Response> {
+  if (response.status === 401 && !isLoginPath(path)) {
+    handleUnauthorized();
+    throw new ApiError("Sua sessão expirou. Faça login novamente.", 401);
+  }
+
+  if (!response.ok) {
+    throw new ApiError(await parseError(response), response.status);
+  }
+
+  return response;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
-  auth = false,
 ): Promise<T> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string> | undefined),
   };
 
-  if (auth) {
-    const token = getToken();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(`${config.apiBaseUrl}${path}`, {
@@ -50,9 +68,7 @@ export async function apiRequest<T>(
     headers,
   });
 
-  if (!response.ok) {
-    throw new ApiError(await parseError(response), response.status);
-  }
+  await handleApiResponse(response, path);
 
   if (response.status === 204) {
     return undefined as T;
@@ -117,6 +133,7 @@ export type CreateProductPayload = {
   tipo: string;
   estoque: number;
   imagem_url?: string;
+  imagem?: File;
   ativo?: boolean;
 };
 
@@ -138,13 +155,33 @@ export function listCategories() {
   return apiRequest<Category[]>("/categories/?active=true");
 }
 
+export function listProducts(active = true) {
+  return apiRequest<ProductResponse[]>(`/products/?active=${active}`);
+}
+
 export function createProduct(payload: CreateProductPayload) {
-  return apiRequest<ProductResponse>(
-    "/products/",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-    true,
-  );
+  const formData = new FormData();
+  formData.append("category_id", String(payload.category_id));
+  formData.append("nome", payload.nome);
+  formData.append("preco", String(payload.preco));
+  formData.append("tamanho", payload.tamanho);
+  formData.append("clube", payload.clube);
+  formData.append("tipo", payload.tipo);
+  formData.append("estoque", String(payload.estoque));
+  formData.append("ativo", String(payload.ativo ?? true));
+
+  if (payload.descricao) {
+    formData.append("descricao", payload.descricao);
+  }
+
+  if (payload.imagem) {
+    formData.append("imagem", payload.imagem);
+  } else if (payload.imagem_url) {
+    formData.append("imagem_url", payload.imagem_url);
+  }
+
+  return apiRequest<ProductResponse>("/products/", {
+    method: "POST",
+    body: formData,
+  });
 }
