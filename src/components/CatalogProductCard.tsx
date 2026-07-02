@@ -1,18 +1,18 @@
-import { Link } from "@tanstack/react-router";
 import { Shirt, ShoppingBag } from "lucide-react";
 import { formatPrice } from "@/data/products";
 import type { CatalogProduct } from "@/lib/catalogProducts";
 
 type CatalogProductCardProps = {
   product: CatalogProduct;
+  onClick: (product: CatalogProduct) => void;
 };
 
-export function CatalogProductCard({ product }: CatalogProductCardProps) {
+export function CatalogProductCard({ product, onClick }: CatalogProductCardProps) {
   return (
-    <Link
-      to="/produto/$id"
-      params={{ id: String(product.id) }}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
+    <button
+      type="button"
+      onClick={() => onClick(product)}
+      className="group flex w-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white text-left shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
     >
       <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-neutral-100">
         {product.imagem_url ? (
@@ -56,6 +56,6 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
           </span>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }

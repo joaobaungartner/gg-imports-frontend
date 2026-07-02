@@ -1,5 +1,12 @@
 import type { ProductResponse } from "@/lib/api";
 
+export type CatalogProductVariant = {
+  id: number;
+  tamanho: string;
+  estoque: number;
+  ativo: boolean;
+};
+
 export type CatalogProduct = {
   id: number;
   nome: string;
@@ -8,6 +15,8 @@ export type CatalogProduct = {
   tipo: string;
   preco: number;
   imagem_url: string | null;
+  descricao: string | null;
+  variantes: CatalogProductVariant[];
   tamanhos: string[];
   inStock: boolean;
 };
@@ -37,6 +46,22 @@ function sortSizes(sizes: string[]): string[] {
   });
 }
 
+function sortVariants(variants: CatalogProductVariant[]): CatalogProductVariant[] {
+  return [...variants].sort((a, b) => {
+    const indexA = SIZE_ORDER.indexOf(a.tamanho as (typeof SIZE_ORDER)[number]);
+    const indexB = SIZE_ORDER.indexOf(b.tamanho as (typeof SIZE_ORDER)[number]);
+
+    if (indexA === -1 && indexB === -1) return a.tamanho.localeCompare(b.tamanho);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+}
+
+export function getProductIds(product: CatalogProduct): number[] {
+  return product.variantes.map((variant) => variant.id);
+}
+
 export function groupProductsByVariant(
   products: ProductResponse[],
   categoryNames: Record<number, string>,
@@ -45,14 +70,22 @@ export function groupProductsByVariant(
 
   for (const product of products) {
     const key = getGroupKey(product);
+    const variant: CatalogProductVariant = {
+      id: product.id,
+      tamanho: product.tamanho,
+      estoque: product.estoque,
+      ativo: product.ativo,
+    };
     const existing = groups.get(key);
 
     if (existing) {
-      if (!existing.tamanhos.includes(product.tamanho)) {
-        existing.tamanhos.push(product.tamanho);
-        existing.tamanhos = sortSizes(existing.tamanhos);
+      const alreadyExists = existing.variantes.some((item) => item.id === variant.id);
+      if (!alreadyExists) {
+        existing.variantes.push(variant);
+        existing.variantes = sortVariants(existing.variantes);
+        existing.tamanhos = sortSizes(existing.variantes.map((item) => item.tamanho));
+        existing.inStock = existing.variantes.some((item) => item.ativo && item.estoque > 0);
       }
-      existing.inStock = existing.inStock || product.estoque > 0;
       continue;
     }
 
@@ -64,8 +97,10 @@ export function groupProductsByVariant(
       tipo: product.tipo,
       preco: Number(product.preco),
       imagem_url: product.imagem_url,
+      descricao: product.descricao,
+      variantes: [variant],
       tamanhos: [product.tamanho],
-      inStock: product.estoque > 0,
+      inStock: product.ativo && product.estoque > 0,
     });
   }
 

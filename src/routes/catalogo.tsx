@@ -1,10 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2, PackagePlus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CatalogProductCard } from "@/components/CatalogProductCard";
+import { ProductDetailsModal } from "@/components/products/ProductDetailsModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { groupProductsByVariant } from "@/lib/catalogProducts";
-import { listCategories, listProducts } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
+import {
+  deactivateManyProducts,
+  deactivateProduct,
+  deleteManyProducts,
+  listCategories,
+  listProducts,
+} from "@/lib/api";
+import { groupProductsByVariant, type CatalogProduct } from "@/lib/catalogProducts";
 
 type CatalogoSearch = {
   created?: string;
@@ -19,48 +27,98 @@ export const Route = createFileRoute("/catalogo")({
 
 function CatalogoPage() {
   const { isAdmin } = useAuth();
+  const { addToCart } = useCart();
   const { created } = Route.useSearch();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [products, setProducts] = useState<ReturnType<typeof groupProductsByVariant>>([]);
+  const [banner, setBanner] = useState("");
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const loadCatalog = useCallback(async (): Promise<CatalogProduct[]> => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [apiProducts, categories] = await Promise.all([
+        listProducts(true),
+        listCategories(),
+      ]);
+
+      const categoryNames = Object.fromEntries(
+        categories.map((category) => [category.id, category.nome]),
+      );
+
+      const grouped = groupProductsByVariant(apiProducts, categoryNames);
+      setProducts(grouped);
+      return grouped;
+    } catch {
+      setError("Não foi possível carregar o catálogo. Tente novamente.");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    loadCatalog();
+  }, [loadCatalog]);
 
-    async function loadCatalog() {
-      setLoading(true);
-      setError("");
+  useEffect(() => {
+    if (created === "success") {
+      setBanner("Produto cadastrado com sucesso e já disponível no catálogo.");
+    }
+  }, [created]);
 
-      try {
-        const [apiProducts, categories] = await Promise.all([
-          listProducts(true),
-          listCategories(),
-        ]);
+  function openProductModal(product: CatalogProduct) {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  }
 
-        if (cancelled) return;
+  function closeProductModal() {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  }
 
-        const categoryNames = Object.fromEntries(
-          categories.map((category) => [category.id, category.nome]),
-        );
+  async function handleDeactivateProduct(productIds: number[]) {
+    await deactivateManyProducts(productIds);
+    setBanner("Produto desativado com sucesso.");
+    await loadCatalog();
+  }
 
-        setProducts(groupProductsByVariant(apiProducts, categoryNames));
-      } catch {
-        if (!cancelled) {
-          setError("Não foi possível carregar o catálogo. Tente novamente.");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
+  async function handleDeactivateSize(productId: number) {
+    const current = selectedProduct;
+    await deactivateProduct(productId);
+    setBanner("Tamanho desativado com sucesso.");
+
+    const catalog = await loadCatalog();
+    if (!current) return;
+
+    const updated = catalog.find(
+      (item) =>
+        item.nome === current.nome &&
+        item.clube === current.clube &&
+        item.categoria === current.categoria &&
+        item.tipo === current.tipo &&
+        item.preco === current.preco &&
+        item.imagem_url === current.imagem_url,
+    );
+
+    if (!updated) {
+      closeProductModal();
+      return;
     }
 
-    loadCatalog();
+    setSelectedProduct(updated);
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  async function handleDeleteProduct(productIds: number[]) {
+    await deleteManyProducts(productIds);
+    setBanner("Produto excluído com sucesso.");
+    await loadCatalog();
+  }
 
   return (
     <div className="container-page py-12">
@@ -83,9 +141,9 @@ function CatalogoPage() {
         )}
       </div>
 
-      {created === "success" && (
+      {banner && (
         <div className="mb-6 rounded-2xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-5 py-4 text-sm text-[var(--color-brand-green)]">
-          Produto cadastrado com sucesso e já disponível no catálogo.
+          {banner}
         </div>
       )}
 
@@ -114,10 +172,25 @@ function CatalogoPage() {
       {!loading && !error && products.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
-            <CatalogProductCard key={product.id} product={product} />
+            <CatalogProductCard
+              key={`${product.id}-${product.nome}`}
+              product={product}
+              onClick={openProductModal}
+            />
           ))}
         </div>
       )}
+
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={closeProductModal}
+        isAdmin={isAdmin}
+        onAddToCart={addToCart}
+        onDeactivateProduct={handleDeactivateProduct}
+        onDeactivateSize={handleDeactivateSize}
+        onDeleteProduct={handleDeleteProduct}
+      />
     </div>
   );
 }

@@ -159,6 +159,32 @@ export function listProducts(active = true) {
   return apiRequest<ProductResponse[]>(`/products/?active=${active}`);
 }
 
+export function deactivateProduct(productId: number) {
+  return apiRequest<ProductResponse>(`/products/${productId}/deactivate`, {
+    method: "PATCH",
+  });
+}
+
+export function activateProduct(productId: number) {
+  return apiRequest<ProductResponse>(`/products/${productId}/activate`, {
+    method: "PATCH",
+  });
+}
+
+export function deactivateManyProducts(productIds: number[]) {
+  return apiRequest<{ message: string; product_ids: number[] }>("/products/deactivate-many", {
+    method: "PATCH",
+    body: JSON.stringify({ product_ids: productIds }),
+  });
+}
+
+export function deleteManyProducts(productIds: number[]) {
+  return apiRequest<{ message: string; product_ids: number[] }>("/products/delete-many", {
+    method: "DELETE",
+    body: JSON.stringify({ product_ids: productIds }),
+  });
+}
+
 export function createProduct(payload: CreateProductPayload) {
   const formData = new FormData();
   formData.append("category_id", String(payload.category_id));

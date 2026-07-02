@@ -1,5 +1,6 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import { Layout } from "@/components/Layout";
 
 export const Route = createRootRoute({
@@ -9,9 +10,11 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <AuthProvider>
-      <Layout>
-        <Outlet />
-      </Layout>
+      <CartProvider>
+        <Layout>
+          <Outlet />
+        </Layout>
+      </CartProvider>
     </AuthProvider>
   );
 }
