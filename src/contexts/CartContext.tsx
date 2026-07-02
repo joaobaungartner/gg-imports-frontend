@@ -7,46 +7,94 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { addCartItem as persistCartItem, getCartCount, getCartItems, type CartItem } from "@/lib/cart";
+import {
+  addCartItem,
+  clearCartStorage,
+  getCartItems,
+  getCartItemsCount,
+  getCartTotal,
+  removeCartItem,
+  updateCartQuantity,
+  type CartItem,
+} from "@/lib/cart";
+
+type AddToCartInput = Omit<CartItem, "quantidade"> & { quantidade: number };
 
 type CartContextValue = {
   items: CartItem[];
   itemCount: number;
-  addToCart: (item: Omit<CartItem, "quantidade"> & { quantidade: number }) => void;
-  refreshCart: () => void;
+  cartTotal: number;
+  addToCart: (item: AddToCartInput) => void;
+  removeFromCart: (productId: number, tamanho: string) => void;
+  updateQuantity: (productId: number, tamanho: string, quantidade: number) => void;
+  clearCart: () => void;
+  getCartTotal: () => number;
+  getCartItemsCount: () => number;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => getCartItems());
-  const [itemCount, setItemCount] = useState(() => getCartCount());
+  const [itemCount, setItemCount] = useState(() => getCartItemsCount());
 
-  const refreshCart = useCallback(() => {
-    setItems(getCartItems());
-    setItemCount(getCartCount());
+  const syncState = useCallback((nextItems: CartItem[]) => {
+    setItems(nextItems);
+    setItemCount(getCartItemsCount());
   }, []);
 
+  const refreshCart = useCallback(() => {
+    syncState(getCartItems());
+  }, [syncState]);
+
   const addToCart = useCallback(
-    (item: Omit<CartItem, "quantidade"> & { quantidade: number }) => {
-      persistCartItem(item);
-      refreshCart();
+    (item: AddToCartInput) => {
+      const nextItems = addCartItem(item);
+      syncState(nextItems);
     },
-    [refreshCart],
+    [syncState],
   );
+
+  const removeFromCart = useCallback(
+    (productId: number, tamanho: string) => {
+      const nextItems = removeCartItem(productId, tamanho);
+      syncState(nextItems);
+    },
+    [syncState],
+  );
+
+  const updateQuantity = useCallback(
+    (productId: number, tamanho: string, quantidade: number) => {
+      const nextItems = updateCartQuantity(productId, tamanho, quantidade);
+      syncState(nextItems);
+    },
+    [syncState],
+  );
+
+  const clearCart = useCallback(() => {
+    const nextItems = clearCartStorage();
+    syncState(nextItems);
+  }, [syncState]);
 
   useEffect(() => {
     refreshCart();
   }, [refreshCart]);
 
+  const cartTotal = useMemo(() => getCartTotal(items), [items]);
+
   const value = useMemo(
     () => ({
       items,
       itemCount,
+      cartTotal,
       addToCart,
-      refreshCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getCartTotal: () => getCartTotal(items),
+      getCartItemsCount: () => getCartItemsCount(),
     }),
-    [items, itemCount, addToCart, refreshCart],
+    [items, itemCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

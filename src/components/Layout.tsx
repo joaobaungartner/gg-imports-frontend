@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { LogIn, LogOut, Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -33,6 +34,7 @@ const FOOTER_LINKS = {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
+  const { itemCount } = useCart();
 
   function handleLogout() {
     setMenuOpen(false);
@@ -101,6 +103,11 @@ function Header() {
               aria-label="Carrinho"
             >
               <ShoppingBag className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand-green)] px-1 text-[10px] font-bold text-white">
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              )}
             </Link>
             <button
               type="button"

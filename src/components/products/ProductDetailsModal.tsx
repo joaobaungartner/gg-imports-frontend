@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Minus, Plus, Shirt, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/data/products";
@@ -14,10 +15,14 @@ type ProductDetailsModalProps = {
   onAddToCart: (payload: {
     productId: number;
     nome: string;
-    imagem_url: string | null;
+    clube?: string;
+    categoria?: string;
+    tipo?: string;
+    imagem_url?: string | null;
     preco: number;
     tamanho: string;
     quantidade: number;
+    estoque?: number;
   }) => void;
   onDeactivateProduct: (productIds: number[]) => Promise<void>;
   onDeactivateSize: (productId: number) => Promise<void>;
@@ -116,16 +121,26 @@ export function ProductDetailsModal({
       return;
     }
 
-    onAddToCart({
-      productId: selectedVariant.id,
-      nome: product.nome,
-      imagem_url: product.imagem_url,
-      preco: product.preco,
-      tamanho: selectedVariant.tamanho,
-      quantidade,
-    });
+    try {
+      onAddToCart({
+        productId: selectedVariant.id,
+        nome: product.nome,
+        clube: product.clube,
+        categoria: product.categoria,
+        tipo: product.tipo,
+        imagem_url: product.imagem_url,
+        preco: product.preco,
+        tamanho: selectedVariant.tamanho,
+        quantidade,
+        estoque: selectedVariant.estoque,
+      });
 
-    setFeedback("Produto adicionado ao carrinho!");
+      setFeedback("Produto adicionado ao carrinho!");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Não foi possível adicionar ao carrinho.";
+      setError(message);
+    }
   }
 
   function handleDeactivateProduct() {
@@ -302,8 +317,16 @@ export function ProductDetailsModal({
             )}
 
             {feedback && (
-              <div className="rounded-xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-4 py-3 text-sm text-[var(--color-brand-green)]">
-                {feedback}
+              <div className="space-y-3">
+                <div className="rounded-xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-4 py-3 text-sm text-[var(--color-brand-green)]">
+                  {feedback}
+                </div>
+                <Link
+                  to="/carrinho"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-[var(--color-brand-green)]/30 px-6 py-3 text-sm font-semibold text-[var(--color-brand-green)] transition-colors hover:bg-[var(--color-brand-green)]/5"
+                >
+                  Ver carrinho
+                </Link>
               </div>
             )}
 
