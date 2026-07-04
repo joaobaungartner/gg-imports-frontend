@@ -211,3 +211,177 @@ export function createProduct(payload: CreateProductPayload) {
     body: formData,
   });
 }
+
+export type ClientProfile = {
+  id: number;
+  user_id: number;
+  nome: string;
+  email: string;
+  telefone: string;
+  cpf: string;
+  role: string;
+  ativo: boolean;
+  data_cadastro: string;
+};
+
+export type AuthMeAddress = {
+  id: number;
+  rua: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  ativo: boolean;
+};
+
+export type AuthMeResponse = {
+  id: number;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  role: string;
+  ativo: boolean;
+  data_cadastro: string;
+  client_id: number | null;
+  cpf: string | null;
+  endereco: AuthMeAddress | null;
+};
+
+export function getAuthMe() {
+  return apiRequest<AuthMeResponse>("/auth/me");
+}
+
+export function getClientByUserId(userId: number) {
+  return apiRequest<ClientProfile>(`/clients/user/${userId}`);
+}
+
+export type ShippingQuotePayload = {
+  cep: string;
+  shipping_method: string;
+  item_count: number;
+};
+
+export type ShippingQuoteResponse = {
+  shipping_method: string;
+  frete: string;
+  label: string;
+};
+
+export function quoteShipping(payload: ShippingQuotePayload) {
+  return apiRequest<ShippingQuoteResponse>("/shipping/quote", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export type ShippingAddressPayload = {
+  cep: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+};
+
+export type CreateOrderItemPayload = {
+  product_id: number;
+  name: string;
+  image_url?: string | null;
+  size: string;
+  quantity: number;
+  unit_price: number;
+};
+
+export type CreateOrderPayload = {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_cpf?: string;
+  shipping_address: ShippingAddressPayload;
+  shipping_method: string;
+  payment_method: string;
+  frete: number;
+  items: CreateOrderItemPayload[];
+};
+
+export type OrderItemResponse = {
+  id: number;
+  product_id: number;
+  nome_produto: string | null;
+  imagem_url: string | null;
+  tamanho: string | null;
+  quantidade: number;
+  preco_unitario: string;
+  subtotal: string;
+  ativo: boolean;
+};
+
+export type OrderResponse = {
+  id: number;
+  client_id: number | null;
+  endereco_id: number | null;
+  customer_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  customer_cpf: string | null;
+  shipping_cep: string | null;
+  shipping_street: string | null;
+  shipping_number: string | null;
+  shipping_complement: string | null;
+  shipping_neighborhood: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_method: string | null;
+  payment_method: string | null;
+  subtotal: string;
+  frete: string;
+  valor_total: string;
+  status: string;
+  data_pedido: string;
+  ativo: boolean;
+  itens: OrderItemResponse[];
+};
+
+export function createOrder(payload: CreateOrderPayload) {
+  return apiRequest<OrderResponse>("/orders/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getOrderById(orderId: number) {
+  return apiRequest<OrderResponse>(`/orders/${orderId}`);
+}
+
+export type OrderListItem = {
+  id: number;
+  client_id: number | null;
+  customer_name: string | null;
+  data_pedido: string;
+  subtotal: string;
+  frete: string;
+  valor_total: string;
+  status: string;
+  ativo: boolean;
+  item_count: number;
+  payment_method: string | null;
+  shipping_method: string | null;
+};
+
+export function getMyOrders() {
+  return apiRequest<OrderListItem[]>("/orders/me");
+}
+
+export type TrackOrderPayload = {
+  order_id: number;
+  identifier: string;
+};
+
+export function trackOrder(payload: TrackOrderPayload) {
+  return apiRequest<OrderResponse>("/orders/track", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

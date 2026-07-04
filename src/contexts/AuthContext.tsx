@@ -65,7 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthState({ user: null, isAuthenticated: false });
 
       if (options?.sessionExpired) {
-        navigate({ to: "/login", search: { session: "expired" } });
+        const currentPath = window.location.pathname;
+        const redirect = currentPath === "/checkout" ? "/checkout" : undefined;
+        navigate({
+          to: "/login",
+          search: {
+            session: "expired",
+            ...(redirect ? { redirect } : {}),
+          },
+        });
         return;
       }
 

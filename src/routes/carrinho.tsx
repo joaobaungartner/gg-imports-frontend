@@ -1,18 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { CartItemCard } from "@/components/cart/CartItemCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { buildWhatsAppCheckoutUrl } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/carrinho")({
   component: CarrinhoPage,
 });
 
 function CarrinhoPage() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { items, itemCount, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const [actionError, setActionError] = useState("");
+  const isCartEmpty = items.length === 0;
 
   function handleUpdateQuantity(productId: number, tamanho: string, quantidade: number) {
     setActionError("");
@@ -36,8 +39,14 @@ function CarrinhoPage() {
   }
 
   function handleCheckout() {
-    if (items.length === 0) return;
-    window.open(buildWhatsAppCheckoutUrl(items), "_blank", "noopener,noreferrer");
+    if (isCartEmpty) return;
+
+    if (isAuthenticated) {
+      navigate({ to: "/checkout" });
+      return;
+    }
+
+    navigate({ to: "/login", search: { redirect: "/checkout" } });
   }
 
   if (items.length === 0) {
@@ -118,7 +127,8 @@ function CarrinhoPage() {
             <button
               type="button"
               onClick={handleCheckout}
-              className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              disabled={isCartEmpty}
+              className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Finalizar pedido
             </button>

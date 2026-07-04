@@ -22,8 +22,10 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as CarrinhoRouteImport } from './routes/carrinho'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AcompanharPedidoRouteImport } from './routes/acompanhar-pedido'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
+import { Route as PedidoOrderIdRouteImport } from './routes/pedido.$orderId'
 import { Route as AdminCadastrarProdutoRouteImport } from './routes/admin/cadastrar-produto'
 
 const TabelaMedidasRoute = TabelaMedidasRouteImport.update({
@@ -91,6 +93,11 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcompanharPedidoRoute = AcompanharPedidoRouteImport.update({
+  id: '/acompanhar-pedido',
+  path: '/acompanhar-pedido',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -101,6 +108,11 @@ const ProdutoIdRoute = ProdutoIdRouteImport.update({
   path: '/produto/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PedidoOrderIdRoute = PedidoOrderIdRouteImport.update({
+  id: '/pedido/$orderId',
+  path: '/pedido/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCadastrarProdutoRoute = AdminCadastrarProdutoRouteImport.update({
   id: '/admin/cadastrar-produto',
   path: '/admin/cadastrar-produto',
@@ -109,6 +121,7 @@ const AdminCadastrarProdutoRoute = AdminCadastrarProdutoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acompanhar-pedido': typeof AcompanharPedidoRoute
   '/cadastro': typeof CadastroRoute
   '/carrinho': typeof CarrinhoRoute
   '/catalogo': typeof CatalogoRoute
@@ -123,10 +136,12 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
+  '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acompanhar-pedido': typeof AcompanharPedidoRoute
   '/cadastro': typeof CadastroRoute
   '/carrinho': typeof CarrinhoRoute
   '/catalogo': typeof CatalogoRoute
@@ -141,11 +156,13 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
+  '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/acompanhar-pedido': typeof AcompanharPedidoRoute
   '/cadastro': typeof CadastroRoute
   '/carrinho': typeof CarrinhoRoute
   '/catalogo': typeof CatalogoRoute
@@ -160,12 +177,14 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
+  '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acompanhar-pedido'
     | '/cadastro'
     | '/carrinho'
     | '/catalogo'
@@ -180,10 +199,12 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/tabela-medidas'
     | '/admin/cadastrar-produto'
+    | '/pedido/$orderId'
     | '/produto/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/acompanhar-pedido'
     | '/cadastro'
     | '/carrinho'
     | '/catalogo'
@@ -198,10 +219,12 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/tabela-medidas'
     | '/admin/cadastrar-produto'
+    | '/pedido/$orderId'
     | '/produto/$id'
   id:
     | '__root__'
     | '/'
+    | '/acompanhar-pedido'
     | '/cadastro'
     | '/carrinho'
     | '/catalogo'
@@ -216,11 +239,13 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/tabela-medidas'
     | '/admin/cadastrar-produto'
+    | '/pedido/$orderId'
     | '/produto/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcompanharPedidoRoute: typeof AcompanharPedidoRoute
   CadastroRoute: typeof CadastroRoute
   CarrinhoRoute: typeof CarrinhoRoute
   CatalogoRoute: typeof CatalogoRoute
@@ -235,6 +260,7 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TabelaMedidasRoute: typeof TabelaMedidasRoute
   AdminCadastrarProdutoRoute: typeof AdminCadastrarProdutoRoute
+  PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
 }
 
@@ -331,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/acompanhar-pedido': {
+      id: '/acompanhar-pedido'
+      path: '/acompanhar-pedido'
+      fullPath: '/acompanhar-pedido'
+      preLoaderRoute: typeof AcompanharPedidoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -345,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdutoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pedido/$orderId': {
+      id: '/pedido/$orderId'
+      path: '/pedido/$orderId'
+      fullPath: '/pedido/$orderId'
+      preLoaderRoute: typeof PedidoOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/cadastrar-produto': {
       id: '/admin/cadastrar-produto'
       path: '/admin/cadastrar-produto'
@@ -357,6 +397,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcompanharPedidoRoute: AcompanharPedidoRoute,
   CadastroRoute: CadastroRoute,
   CarrinhoRoute: CarrinhoRoute,
   CatalogoRoute: CatalogoRoute,
@@ -371,6 +412,7 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TabelaMedidasRoute: TabelaMedidasRoute,
   AdminCadastrarProdutoRoute: AdminCadastrarProdutoRoute,
+  PedidoOrderIdRoute: PedidoOrderIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,17 +3,20 @@ import { Loader2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { login } from "@/lib/api";
+import { resolveRedirectPath } from "@/lib/authRedirect";
 import { isValidEmail } from "@/lib/validators";
 
 type LoginSearch = {
   cadastro?: string;
   session?: string;
+  redirect?: string;
 };
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): LoginSearch => ({
     cadastro: typeof search.cadastro === "string" ? search.cadastro : undefined,
     session: typeof search.session === "string" ? search.session : undefined,
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   component: LoginPage,
 });
@@ -21,7 +24,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { login: setAuth } = useAuth();
-  const { cadastro, session } = Route.useSearch();
+  const { cadastro, session, redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +48,8 @@ function LoginPage() {
     try {
       const response = await login({ email: email.trim(), senha });
       setAuth(response);
-      await navigate({ to: "/" });
+      const destination = resolveRedirectPath(redirect);
+      await navigate({ to: destination });
     } catch {
       setError("E-mail ou senha incorretos.");
     } finally {
@@ -59,7 +63,9 @@ function LoginPage() {
         <div className="mb-8 text-center">
           <h1 className="font-display text-3xl font-bold text-neutral-900">Entrar</h1>
           <p className="mt-2 text-sm text-neutral-600">
-            Acesse sua conta para acompanhar pedidos e comprar com mais facilidade.
+            {redirect === "/checkout"
+              ? "Faça login para continuar com a finalização do seu pedido."
+              : "Acesse sua conta para acompanhar pedidos e comprar com mais facilidade."}
           </p>
         </div>
 

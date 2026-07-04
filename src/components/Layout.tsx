@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { label: "Catálogo", to: "/catalogo" },
   { label: "Lançamentos", to: "/lancamentos" },
   { label: "Promoções", to: "/promocoes" },
+  { label: "Acompanhe seu pedido", to: "/acompanhar-pedido" },
   { label: "Como comprar", to: "/como-comprar" },
   { label: "Contato", to: "/contato" },
 ] as const;
@@ -22,7 +23,7 @@ const FOOTER_LINKS = {
   ajuda: [
     { label: "Como comprar", to: "/como-comprar" },
     { label: "Tabela de medidas", to: "/tabela-medidas" },
-    { label: "Rastrear pedido", to: "/rastrear-pedido" },
+    { label: "Rastrear pedido", to: "/acompanhar-pedido" },
     { label: "FAQ", to: "/faq" },
   ],
   institucional: [
