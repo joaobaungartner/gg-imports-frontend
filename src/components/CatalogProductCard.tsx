@@ -1,4 +1,4 @@
-import { Shirt, ShoppingBag } from "lucide-react";
+import { Shirt } from "lucide-react";
 import { formatPrice } from "@/data/products";
 import type { CatalogProduct } from "@/lib/catalogProducts";
 
@@ -12,49 +12,56 @@ export function CatalogProductCard({ product, onClick }: CatalogProductCardProps
     <button
       type="button"
       onClick={() => onClick(product)}
-      className="group flex w-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white text-left shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
+      className="group surface-card flex w-full flex-col overflow-hidden text-left transition-transform duration-300 hover:-translate-y-0.5"
     >
-      <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-neutral-100">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-cream)]">
         {product.imagem_url ? (
           <img
             src={product.imagem_url}
             alt={product.nome}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-neutral-100 to-neutral-200 text-neutral-400">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[var(--color-muted)]">
             <Shirt className="h-12 w-12" />
             <span className="text-xs font-medium">Sem imagem</span>
           </div>
         )}
 
-        {!product.inStock && (
-          <span className="absolute bottom-3 rounded-full bg-neutral-900/80 px-3 py-1 text-xs text-white">
-            Sob encomenda
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-forest)]/0 opacity-0 transition-all duration-300 group-hover:bg-[var(--color-forest)]/45 group-hover:opacity-100">
+          <span className="border border-white/70 bg-white/10 px-4 py-2 text-xs font-semibold tracking-[0.12em] text-white uppercase backdrop-blur-sm">
+            Ver detalhes
           </span>
-        )}
+        </div>
+
+        <span
+          className={
+            product.inStock
+              ? "tag-lime absolute top-3 left-3"
+              : "absolute top-3 left-3 inline-flex items-center rounded-full bg-[var(--color-ink)]/80 px-2.5 py-0.5 text-[0.65rem] font-bold tracking-[0.06em] text-white uppercase"
+          }
+        >
+          {product.inStock ? "Pronta entrega" : "Sob encomenda"}
+        </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{product.clube}</p>
-        <h3 className="font-display line-clamp-2 text-sm font-semibold leading-snug text-neutral-900 sm:text-base">
+        <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-[var(--color-muted)] uppercase">
+          {product.categoria}
+        </p>
+        <h3 className="line-clamp-2 text-sm leading-snug font-semibold text-[var(--color-ink)] sm:text-base">
           {product.nome}
         </h3>
-        <p className="text-xs text-neutral-500">
-          {product.categoria} · {product.tipo}
+        <p className="text-xs text-[var(--color-muted)]">{product.clube}</p>
+        <p className="font-display text-lg font-bold text-[var(--color-forest)]">
+          {formatPrice(product.preco)}
         </p>
-        <p className="text-xs text-neutral-600">
-          Tamanhos: <span className="font-medium text-neutral-800">{product.tamanhos.join(", ")}</span>
+        <p className="text-xs text-[var(--color-muted)]">
+          Tamanhos:{" "}
+          <span className="font-medium text-[var(--color-ink)]">{product.tamanhos.join(", ")}</span>
         </p>
 
-        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-          <span className="font-display text-lg font-bold text-neutral-900">
-            {formatPrice(product.preco)}
-          </span>
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 transition-colors group-hover:bg-[var(--color-brand-green)] group-hover:text-white">
-            <ShoppingBag className="h-4 w-4" />
-          </span>
-        </div>
+        <span className="btn-primary mt-auto w-full px-3 py-2.5 text-xs">Escolher tamanho</span>
       </div>
     </button>
   );

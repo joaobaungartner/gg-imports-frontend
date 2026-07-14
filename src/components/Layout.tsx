@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, LogOut, Menu, Search, ShoppingBag, X } from "lucide-react";
+import { LogIn, LogOut, Menu, ShoppingBag, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -32,9 +32,43 @@ const FOOTER_LINKS = {
   ],
 } as const;
 
+function BrandMark({ inverted = false }: { inverted?: boolean }) {
+  return (
+    <Link to="/" className="group flex shrink-0 items-center gap-2.5">
+      <span
+        className={cn(
+          "relative flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold tracking-tight",
+          inverted ? "bg-white text-[var(--color-forest)]" : "bg-[var(--color-forest)] text-white",
+        )}
+      >
+        GG
+        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[var(--color-lime)]" />
+      </span>
+      <span className="leading-none">
+        <span
+          className={cn(
+            "font-display block text-[15px] font-800 font-extrabold tracking-[0.08em] sm:text-base",
+            inverted ? "text-white" : "text-[var(--color-ink)]",
+          )}
+        >
+          GG IMPORTS
+        </span>
+        <span
+          className={cn(
+            "mt-0.5 block text-[10px] uppercase tracking-[0.18em]",
+            inverted ? "text-white/55" : "text-[var(--color-muted)]",
+          )}
+        >
+          Camisas de futebol
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
 
   function handleLogout() {
@@ -44,75 +78,66 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="bg-[var(--color-brand-dark)] px-4 py-2 text-center text-xs text-neutral-300 sm:text-sm">
-        Envio para todo o Brasil • Pix com desconto • Atendimento via WhatsApp
+      <div className="bg-[var(--color-forest)] px-4 py-2 text-center text-[11px] text-white/85 sm:text-xs">
+        <span className="hidden sm:inline">Frete grátis acima de R$ 399 · </span>
+        <span>5% OFF no Pix · Envio para todo o Brasil</span>
       </div>
 
-      <div className="border-b border-neutral-200/80 bg-white/95 backdrop-blur-md">
-        <div className="container-page flex items-center justify-between gap-4 py-4">
-          <Link to="/" className="flex shrink-0 flex-col leading-none">
-            <span className="font-display text-xl font-bold tracking-tight text-[var(--color-brand-dark)] sm:text-2xl">
-              GG <span className="text-gold">Imports</span>
-            </span>
-            <span className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:text-xs">
-              Camisas de futebol
-            </span>
-          </Link>
+      <div className="border-b border-[var(--color-line)] bg-[var(--color-canvas)]/90 backdrop-blur-md">
+        <div className="container-page flex items-center justify-between gap-4 py-3.5">
+          <BrandMark />
 
-          <nav className="hidden items-center gap-6 lg:flex">
+          <nav className="hidden items-center gap-5 xl:flex">
             {NAV_LINKS.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                className="text-sm font-medium text-neutral-600 transition-colors hover:text-[var(--color-brand-green)]"
-                activeProps={{ className: "text-[var(--color-brand-green)]" }}
+                className="text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-forest)]"
+                activeProps={{ className: "text-[var(--color-forest)]" }}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {isAuthenticated ? (
               <button
                 type="button"
                 onClick={handleLogout}
-                className="hidden items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-red-400 hover:text-red-600 sm:inline-flex"
+                className="hidden items-center gap-1.5 border border-[var(--color-line)] px-3 py-2 text-[13px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] sm:inline-flex"
+                style={{ borderRadius: 4 }}
               >
-                <LogOut className="h-4 w-4" />
-                Sair
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="max-w-28 truncate">{user?.nome?.split(" ")[0] ?? "Sair"}</span>
               </button>
             ) : (
               <Link
                 to="/login"
-                className="hidden items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-[var(--color-brand-green)] hover:text-[var(--color-brand-green)] sm:inline-flex"
+                className="hidden items-center gap-1.5 border border-[var(--color-line)] px-3 py-2 text-[13px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-forest)] hover:text-[var(--color-forest)] sm:inline-flex"
+                style={{ borderRadius: 4 }}
               >
-                <LogIn className="h-4 w-4" />
+                <LogIn className="h-3.5 w-3.5" />
                 Entrar
               </Link>
             )}
-            <button
-              type="button"
-              className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 sm:flex"
-              aria-label="Buscar"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+
             <Link
               to="/carrinho"
-              className="relative rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100"
+              className="btn-primary gap-2 !px-3 !py-2"
               aria-label="Carrinho"
             >
-              <ShoppingBag className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand-green)] px-1 text-[10px] font-bold text-white">
-                  {itemCount > 99 ? "99+" : itemCount}
-                </span>
-              )}
+              <ShoppingBag className="h-4 w-4" />
+              <span className="hidden sm:inline">Carrinho</span>
+              <span className="tag-lime !px-1.5 !py-0.5 !text-[10px]">
+                {itemCount > 99 ? "99+" : itemCount}
+              </span>
             </Link>
+
             <button
               type="button"
-              className="rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 lg:hidden"
+              className="border border-[var(--color-line)] p-2 text-[var(--color-ink)] transition-colors hover:bg-[var(--color-cream)] xl:hidden"
+              style={{ borderRadius: 4 }}
               aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
               onClick={() => setMenuOpen((open) => !open)}
             >
@@ -123,16 +148,17 @@ function Header() {
 
         <div
           className={cn(
-            "overflow-hidden border-t border-neutral-100 bg-white transition-all lg:hidden",
-            menuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
+            "overflow-hidden border-t border-[var(--color-line)] bg-[var(--color-canvas)] transition-all xl:hidden",
+            menuOpen ? "max-h-[28rem] opacity-100" : "max-h-0 opacity-0",
           )}
         >
-          <nav className="container-page flex flex-col gap-1 py-4">
+          <nav className="container-page flex flex-col gap-0.5 py-4">
             {NAV_LINKS.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                className="px-3 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-cream)]"
+                style={{ borderRadius: 4 }}
                 onClick={() => setMenuOpen(false)}
               >
                 {item.label}
@@ -142,7 +168,8 @@ function Header() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="mt-2 flex w-full items-center gap-2 rounded-lg border border-neutral-300 px-3 py-2.5 text-sm font-semibold text-neutral-700 transition-colors hover:border-red-400 hover:text-red-600"
+                className="mt-2 flex w-full items-center gap-2 border border-[var(--color-line)] px-3 py-2.5 text-sm font-semibold text-[var(--color-ink)]"
+                style={{ borderRadius: 4 }}
               >
                 <LogOut className="h-4 w-4" />
                 Sair
@@ -150,7 +177,7 @@ function Header() {
             ) : (
               <Link
                 to="/login"
-                className="mt-2 flex items-center gap-2 rounded-lg bg-[var(--color-brand-green)] px-3 py-2.5 text-sm font-semibold text-white"
+                className="btn-primary mt-2"
                 onClick={() => setMenuOpen(false)}
               >
                 <LogIn className="h-4 w-4" />
@@ -166,15 +193,15 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="border-t border-neutral-200 bg-[var(--color-brand-dark)] text-neutral-300">
-      <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="bg-[var(--color-forest)] text-white/75">
+      <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
-          <p className="font-display text-xl font-bold text-white">
-            GG <span className="text-gold">Imports</span>
+          <BrandMark inverted />
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/55">
+            Camisas que carregam história, rivalidade e memória. Curadoria para quem vive o futebol.
           </p>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-neutral-400">
-            Camisas de futebol importadas com qualidade premium. Brasileirão, europeus, seleções,
-            retrô, infantil e player version.
+          <p className="font-serif mt-5 text-lg italic text-[var(--color-lime)]">
+            Feito para quem vive o futebol
           </p>
         </div>
 
@@ -184,7 +211,7 @@ function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-page py-5 text-center text-xs text-neutral-500">
+        <div className="container-page py-5 text-center text-xs text-white/40">
           © {new Date().getFullYear()} GG Imports. Todos os direitos reservados.
         </div>
       </div>
@@ -201,11 +228,13 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gold">{title}</p>
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-lime)]">
+        {title}
+      </p>
       <ul className="space-y-2 text-sm">
         {links.map((link) => (
           <li key={link.to}>
-            <Link to={link.to} className="hover:text-white">
+            <Link to={link.to} className="text-white/65 transition-colors hover:text-white">
               {link.label}
             </Link>
           </li>

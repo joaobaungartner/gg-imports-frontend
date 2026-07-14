@@ -58,93 +58,94 @@ function LoginPage() {
   }
 
   return (
-    <div className="container-page py-12 lg:py-16">
-      <div className="mx-auto max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="font-display text-3xl font-bold text-neutral-900">Entrar</h1>
-          <p className="mt-2 text-sm text-neutral-600">
-            {redirect === "/checkout"
-              ? "Faça login para continuar com a finalização do seu pedido."
-              : "Acesse sua conta para acompanhar pedidos e comprar com mais facilidade."}
-          </p>
-        </div>
-
-        {session === "expired" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Sua sessão expirou. Faça login novamente.
+    <div className="section-canvas min-h-[70vh]">
+      <div className="container-page py-12 lg:py-16">
+        <div className="mx-auto max-w-md">
+          <div className="mb-8 text-center">
+            <p className="eyebrow justify-center">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-lime)]" />
+              Conta GG Imports
+            </p>
+            <h1 className="editorial-title mt-3 text-3xl sm:text-4xl">
+              Entrar na <span className="editorial-serif">sua conta</span>
+            </h1>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+              {redirect === "/checkout"
+                ? "Faça login para continuar com a finalização do seu pedido."
+                : "Acesse sua conta para acompanhar pedidos e comprar com mais facilidade."}
+            </p>
           </div>
-        )}
 
-        {cadastro === "ok" && (
-          <div className="mb-6 rounded-xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-4 py-3 text-sm text-[var(--color-brand-green)]">
-            Conta criada com sucesso! Faça login para continuar.
-          </div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft sm:p-8"
-        >
-          {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
+          {session === "expired" && (
+            <div className="alert-error mb-6" role="status">
+              Sua sessão expirou. Faça login novamente.
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-neutral-700">
-                E-mail
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand-green)] focus:ring-2 focus:ring-[var(--color-brand-green)]/20"
-                placeholder="seu@email.com"
-              />
+          {cadastro === "ok" && (
+            <div className="alert-success mb-6" role="status">
+              Conta criada com sucesso! Faça login para continuar.
             </div>
+          )}
 
-            <div>
-              <label htmlFor="senha" className="mb-1.5 block text-sm font-medium text-neutral-700">
-                Senha
-              </label>
-              <input
-                id="senha"
-                type="password"
-                autoComplete="current-password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand-green)] focus:ring-2 focus:ring-[var(--color-brand-green)]/20"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Entrando...
-              </>
-            ) : (
-              "Entrar"
+          <form onSubmit={handleSubmit} className="surface-card p-6 sm:p-8">
+            {error && (
+              <div className="alert-error mb-4" role="alert">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
 
-        <p className="mt-6 text-center text-sm text-neutral-600">
-          Ainda não tem conta?{" "}
-          <Link to="/cadastro" className="font-semibold text-[var(--color-brand-green)] hover:underline">
-            Cadastre-se
-          </Link>
-        </p>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="field-label">
+                  E-mail
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="field-input"
+                  placeholder="seu@email.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="senha" className="field-label">
+                  Senha
+                </label>
+                <input
+                  id="senha"
+                  type="password"
+                  autoComplete="current-password"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="field-input"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} className="btn-primary mt-6 w-full">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+            Ainda não tem conta?{" "}
+            <Link to="/cadastro" className="btn-ghost inline !p-0 font-semibold">
+              Cadastre-se
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

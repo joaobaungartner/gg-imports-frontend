@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Minus, Plus, Shirt, X } from "lucide-react";
+import { Minus, Plus, ShieldCheck, Shirt, Truck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/data/products";
 import type { CatalogProduct, CatalogProductVariant } from "@/lib/catalogProducts";
@@ -60,7 +60,7 @@ export function ProductDetailsModal({
     setFeedback("");
     setError("");
     setLoadingAction(null);
-  }, [isOpen, product?.id]);
+  }, [isOpen, product]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,6 +83,8 @@ export function ProductDetailsModal({
   if (!isOpen || !product) {
     return null;
   }
+
+  const activeProduct = product;
 
   async function runAdminAction(actionKey: string, action: () => Promise<void>) {
     setError("");
@@ -124,12 +126,12 @@ export function ProductDetailsModal({
     try {
       onAddToCart({
         productId: selectedVariant.id,
-        nome: product.nome,
-        clube: product.clube,
-        categoria: product.categoria,
-        tipo: product.tipo,
-        imagem_url: product.imagem_url,
-        preco: product.preco,
+        nome: activeProduct.nome,
+        clube: activeProduct.clube,
+        categoria: activeProduct.categoria,
+        tipo: activeProduct.tipo,
+        imagem_url: activeProduct.imagem_url,
+        preco: activeProduct.preco,
         tamanho: selectedVariant.tamanho,
         quantidade,
         estoque: selectedVariant.estoque,
@@ -150,7 +152,7 @@ export function ProductDetailsModal({
     if (!confirmed) return;
 
     runAdminAction("deactivate-product", async () => {
-      await onDeactivateProduct(getProductIds(product));
+      await onDeactivateProduct(getProductIds(activeProduct));
       setFeedback("Produto desativado com sucesso.");
       onClose();
     });
@@ -180,7 +182,7 @@ export function ProductDetailsModal({
     if (!confirmed) return;
 
     runAdminAction("delete-product", async () => {
-      await onDeleteProduct(getProductIds(product));
+      await onDeleteProduct(getProductIds(activeProduct));
       setFeedback("Produto excluído com sucesso.");
       onClose();
     });
@@ -191,22 +193,27 @@ export function ProductDetailsModal({
       <button
         type="button"
         aria-label="Fechar modal"
-        className="absolute inset-0 bg-neutral-900/60 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[var(--color-forest)]/75 backdrop-blur-md"
         onClick={onClose}
       />
 
-      <div className="relative z-10 max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-neutral-200 bg-white shadow-elevated">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-details-title"
+        className="relative z-10 max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[6px] border border-[var(--color-line)] bg-[var(--color-canvas)] shadow-elevated"
+      >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-soft transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+          className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-white text-[var(--color-muted)] transition-colors hover:border-[var(--color-forest)] hover:text-[var(--color-ink)]"
           aria-label="Fechar"
         >
           <X className="h-5 w-5" />
         </button>
 
         <div className="grid gap-0 md:grid-cols-2">
-          <div className="relative min-h-[280px] bg-neutral-100 md:min-h-[520px]">
+          <div className="relative min-h-[260px] bg-[var(--color-cream)] md:min-h-[560px]">
             {product.imagem_url ? (
               <img
                 src={product.imagem_url}
@@ -214,7 +221,7 @@ export function ProductDetailsModal({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 text-neutral-400 md:min-h-[520px]">
+              <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 text-[var(--color-muted)] md:min-h-[560px]">
                 <Shirt className="h-16 w-16" />
                 <span className="text-sm font-medium">Sem imagem</span>
               </div>
@@ -223,24 +230,34 @@ export function ProductDetailsModal({
 
           <div className="flex flex-col gap-5 p-6 sm:p-8">
             <div className="space-y-2 pr-10">
-              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                {product.clube}
+              <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-[var(--color-muted)] uppercase">
+                {product.categoria}
+                {product.clube ? ` · ${product.clube}` : ""}
               </p>
-              <h2 className="font-display text-2xl font-bold text-neutral-900">{product.nome}</h2>
-              <p className="text-sm text-neutral-600">
-                {product.categoria} · {product.tipo}
+              <h2
+                id="product-details-title"
+                className="editorial-title text-2xl sm:text-3xl"
+              >
+                {product.nome}
+              </h2>
+              <p className="text-xs tracking-wide text-[var(--color-muted)] uppercase">
+                {product.tipo}
               </p>
-              <p className="font-display text-2xl font-bold text-[var(--color-brand-green)]">
+              <p className="font-display text-2xl font-bold text-[var(--color-forest)]">
                 {formatPrice(product.preco)}
               </p>
             </div>
 
             {product.descricao && (
-              <p className="text-sm leading-relaxed text-neutral-600">{product.descricao}</p>
+              <div className="border-y border-[var(--color-line)] py-4">
+                <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                  {product.descricao}
+                </p>
+              </div>
             )}
 
             <div>
-              <p className="mb-2 text-sm font-medium text-neutral-700">Tamanhos disponíveis</p>
+              <p className="field-label mb-2">Tamanho</p>
               <div className="flex flex-wrap gap-2">
                 {product.variantes.map((variant) => {
                   const available = isVariantAvailable(variant);
@@ -257,11 +274,12 @@ export function ProductDetailsModal({
                         setError("");
                       }}
                       className={cn(
-                        "rounded-xl border px-4 py-2 text-sm font-semibold transition-colors",
+                        "flex h-11 min-w-11 items-center justify-center rounded-[4px] border px-3 text-sm font-semibold transition-colors",
                         selected
-                          ? "border-[var(--color-brand-green)] bg-[var(--color-brand-green)]/10 text-[var(--color-brand-green)]"
-                          : "border-neutral-300 text-neutral-700 hover:border-neutral-400",
-                        !available && "cursor-not-allowed border-neutral-200 bg-neutral-50 text-neutral-400",
+                          ? "border-[var(--color-forest)] bg-[var(--color-forest)] text-white"
+                          : "border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:border-[var(--color-forest-mid)]",
+                        !available &&
+                          "cursor-not-allowed border-[var(--color-line)] bg-[var(--color-cream)] text-[var(--color-muted)] opacity-55",
                       )}
                     >
                       {variant.tamanho}
@@ -272,24 +290,26 @@ export function ProductDetailsModal({
             </div>
 
             {selectedVariant && (
-              <p className="text-sm text-neutral-600">
+              <p className="text-sm text-[var(--color-muted)]">
                 Estoque do tamanho {selectedVariant.tamanho}:{" "}
-                <span className="font-medium text-neutral-900">{selectedVariant.estoque}</span>
+                <span className="font-medium text-[var(--color-ink)]">
+                  {selectedVariant.estoque}
+                </span>
               </p>
             )}
 
             <div>
-              <p className="mb-2 text-sm font-medium text-neutral-700">Quantidade</p>
-              <div className="inline-flex items-center rounded-xl border border-neutral-300">
+              <p className="field-label mb-2">Quantidade</p>
+              <div className="inline-flex items-center overflow-hidden rounded-[4px] border border-[var(--color-line)] bg-white">
                 <button
                   type="button"
                   onClick={() => setQuantidade((value) => Math.max(1, value - 1))}
-                  className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:bg-neutral-50"
+                  className="flex h-9 w-9 items-center justify-center text-[var(--color-muted)] transition-colors hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)]"
                   aria-label="Diminuir quantidade"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="min-w-10 text-center text-sm font-semibold text-neutral-900">
+                <span className="min-w-8 text-center text-sm font-semibold text-[var(--color-ink)]">
                   {quantidade}
                 </span>
                 <button
@@ -302,69 +322,82 @@ export function ProductDetailsModal({
                     )
                   }
                   disabled={selectedVariant ? quantidade >= selectedVariant.estoque : false}
-                  className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-9 w-9 items-center justify-center text-[var(--color-muted)] transition-colors hover:bg-[var(--color-cream)] hover:text-[var(--color-ink)] disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Aumentar quantidade"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="alert-error" role="alert">
                 {error}
               </div>
             )}
 
             {feedback && (
               <div className="space-y-3">
-                <div className="rounded-xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-4 py-3 text-sm text-[var(--color-brand-green)]">
+                <div className="alert-success" role="status">
                   {feedback}
                 </div>
-                <Link
-                  to="/carrinho"
-                  className="inline-flex w-full items-center justify-center rounded-full border border-[var(--color-brand-green)]/30 px-6 py-3 text-sm font-semibold text-[var(--color-brand-green)] transition-colors hover:bg-[var(--color-brand-green)]/5"
-                >
+                <Link to="/carrinho" className="btn-secondary w-full">
                   Ver carrinho
                 </Link>
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            >
+            <button type="button" onClick={handleAddToCart} className="btn-primary w-full py-3.5 text-base">
               Adicionar ao carrinho
             </button>
 
+            <ul className="space-y-1.5 text-xs text-[var(--color-muted)]">
+              <li className="flex items-center gap-2">
+                <Truck className="h-3.5 w-3.5 shrink-0 text-[var(--color-forest-mid)]" />
+                Envio para todo o Brasil
+              </li>
+              <li className="flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[var(--color-forest-mid)]" />
+                Compra segura e atendimento próximo
+              </li>
+            </ul>
+
             {isAdmin && (
-              <div className="mt-2 rounded-2xl border border-red-200 bg-red-50/60 p-4">
-                <p className="mb-3 text-sm font-semibold text-red-800">Ações administrativas</p>
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <div className="mt-2 rounded-[4px] border border-[color-mix(in_srgb,var(--color-danger)_35%,white)] bg-[color-mix(in_srgb,var(--color-danger)_6%,white)] p-4">
+                <p className="mb-1 text-xs font-semibold tracking-[0.08em] text-[var(--color-danger)] uppercase">
+                  Ações administrativas
+                </p>
+                <p className="mb-3 text-xs text-[var(--color-muted)]">
+                  Desative tamanhos ou remova o produto do catálogo. Ações podem ser irreversíveis.
+                </p>
+                <div className="flex flex-col gap-2">
                   <button
                     type="button"
                     disabled={loadingAction !== null}
                     onClick={handleDeactivateProduct}
-                    className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-60"
+                    className="rounded-[4px] border border-[color-mix(in_srgb,var(--color-danger)_40%,white)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,white)] disabled:opacity-60"
                   >
-                    Desativar produto
+                    {loadingAction === "deactivate-product"
+                      ? "Desativando…"
+                      : "Desativar produto"}
                   </button>
                   <button
                     type="button"
                     disabled={loadingAction !== null}
                     onClick={handleDeactivateSize}
-                    className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-60"
+                    className="rounded-[4px] border border-[color-mix(in_srgb,var(--color-danger)_40%,white)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,white)] disabled:opacity-60"
                   >
-                    Desativar tamanho selecionado
+                    {loadingAction === "deactivate-size"
+                      ? "Desativando…"
+                      : "Desativar tamanho selecionado"}
                   </button>
                   <button
                     type="button"
                     disabled={loadingAction !== null}
                     onClick={handleDeleteProduct}
-                    className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    className="rounded-[4px] bg-[var(--color-danger)] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
                   >
-                    Excluir produto
+                    {loadingAction === "delete-product" ? "Excluindo…" : "Excluir produto"}
                   </button>
                 </div>
               </div>

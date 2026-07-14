@@ -10,12 +10,18 @@ export const Route = createFileRoute("/carrinho")({
   component: CarrinhoPage,
 });
 
+const FREE_SHIPPING_THRESHOLD = 399;
+
 function CarrinhoPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { items, itemCount, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const [actionError, setActionError] = useState("");
   const isCartEmpty = items.length === 0;
+
+  const freeShippingProgress = Math.min((cartTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const remainingForFreeShipping = Math.max(FREE_SHIPPING_THRESHOLD - cartTotal, 0);
+  const qualifiesForFreeShippingVisual = cartTotal >= FREE_SHIPPING_THRESHOLD;
 
   function handleUpdateQuantity(productId: number, tamanho: string, quantidade: number) {
     setActionError("");
@@ -52,19 +58,16 @@ function CarrinhoPage() {
   if (items.length === 0) {
     return (
       <div className="container-page py-12 lg:py-16">
-        <div className="mx-auto max-w-lg rounded-3xl border border-neutral-200/80 bg-white px-6 py-16 text-center shadow-soft">
-          <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
+        <div className="surface-card mx-auto max-w-lg px-6 py-16 text-center">
+          <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded bg-cream text-muted">
             <ShoppingBag className="h-7 w-7" />
           </span>
-          <h1 className="font-display text-3xl font-bold text-neutral-900">Carrinho</h1>
-          <p className="mt-4 text-lg font-medium text-neutral-900">Seu carrinho está vazio.</p>
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="eyebrow mb-3 justify-center">Carrinho</p>
+          <h1 className="editorial-title text-3xl sm:text-4xl">Vazio por enquanto</h1>
+          <p className="mt-3 text-sm text-muted">
             Adicione produtos do catálogo para continuar.
           </p>
-          <Link
-            to="/catalogo"
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          >
+          <Link to="/catalogo" className="btn-primary mt-8">
             Ver catálogo
           </Link>
         </div>
@@ -75,18 +78,17 @@ function CarrinhoPage() {
   return (
     <div className="container-page py-12 lg:py-16">
       <div className="mb-8">
-        <h1 className="font-display text-3xl font-bold text-neutral-900">Carrinho</h1>
-        <p className="mt-2 text-neutral-600">Revise seus produtos antes de finalizar o pedido.</p>
+        <p className="eyebrow mb-2">{itemCount} {itemCount === 1 ? "item" : "itens"}</p>
+        <h1 className="editorial-title text-3xl sm:text-4xl lg:text-5xl">Carrinho</h1>
+        <p className="mt-3 max-w-xl text-sm text-muted">
+          Revise seus produtos antes de finalizar o pedido.
+        </p>
       </div>
 
-      {actionError && (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-          {actionError}
-        </div>
-      )}
+      {actionError && <div className="alert-error mb-6">{actionError}</div>}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-4">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="space-y-3">
           {items.map((item) => (
             <CartItemCard
               key={`${item.productId}-${item.tamanho}`}
@@ -97,51 +99,72 @@ function CarrinhoPage() {
           ))}
         </div>
 
-        <aside className="h-fit rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-          <h2 className="font-display text-xl font-bold text-neutral-900">Resumo do pedido</h2>
+        <aside className="surface-card sticky top-24 h-fit p-6">
+          <h2 className="font-display text-lg font-bold text-ink">Resumo do pedido</h2>
+
+          <div className="mt-5 rounded border border-line bg-cream/60 px-3.5 py-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+                Frete grátis
+              </p>
+              {qualifiesForFreeShippingVisual ? (
+                <span className="tag-lime">Elegível</span>
+              ) : (
+                <span className="text-xs text-muted">
+                  Faltam {formatCurrency(remainingForFreeShipping)}
+                </span>
+              )}
+            </div>
+            <div className="h-1 overflow-hidden rounded-full bg-line">
+              <div
+                className="h-full rounded-full bg-forest-mid transition-all duration-300"
+                style={{ width: `${freeShippingProgress}%` }}
+              />
+            </div>
+            <p className="mt-2 text-[11px] text-muted">
+              Frete grátis acima de {formatCurrency(FREE_SHIPPING_THRESHOLD)}
+            </p>
+          </div>
 
           <dl className="mt-5 space-y-3 text-sm">
-            <div className="flex items-center justify-between text-neutral-600">
+            <div className="flex items-center justify-between text-muted">
               <dt>Itens</dt>
-              <dd className="font-medium text-neutral-900">{itemCount}</dd>
+              <dd className="font-medium text-ink">{itemCount}</dd>
             </div>
-            <div className="flex items-center justify-between text-neutral-600">
+            <div className="flex items-center justify-between text-muted">
               <dt>Subtotal</dt>
-              <dd className="font-medium text-neutral-900">{formatCurrency(cartTotal)}</dd>
+              <dd className="font-medium text-ink">{formatCurrency(cartTotal)}</dd>
             </div>
-            <div className="flex items-center justify-between text-neutral-600">
+            <div className="flex items-center justify-between text-muted">
               <dt>Frete</dt>
-              <dd className="font-medium text-neutral-900">A combinar</dd>
+              <dd className="font-medium text-ink">A combinar</dd>
             </div>
-            <div className="border-t border-neutral-200 pt-3">
+            <div className="border-t border-line pt-3">
               <div className="flex items-center justify-between">
-                <dt className="font-semibold text-neutral-900">Total</dt>
-                <dd className="font-display text-xl font-bold text-[var(--color-brand-green)]">
+                <dt className="font-semibold text-ink">Total</dt>
+                <dd className="font-display text-xl font-bold text-forest">
                   {formatCurrency(cartTotal)}
                 </dd>
               </div>
             </div>
           </dl>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-2.5">
             <button
               type="button"
               onClick={handleCheckout}
               disabled={isCartEmpty}
-              className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-primary w-full"
             >
               Finalizar pedido
             </button>
-            <Link
-              to="/catalogo"
-              className="inline-flex w-full items-center justify-center rounded-full border border-neutral-300 px-6 py-3 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
-            >
+            <Link to="/catalogo" className="btn-secondary w-full">
               Continuar comprando
             </Link>
             <button
               type="button"
               onClick={handleClearCart}
-              className="inline-flex w-full items-center justify-center rounded-full border border-red-200 px-6 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+              className="btn-ghost w-full justify-center text-danger hover:text-danger"
             >
               Limpar carrinho
             </button>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, PackagePlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Loader2, PackagePlus, Search, Shirt } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CatalogProductCard } from "@/components/CatalogProductCard";
 import { ProductDetailsModal } from "@/components/products/ProductDetailsModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,7 @@ import {
   listProducts,
 } from "@/lib/api";
 import { groupProductsByVariant, type CatalogProduct } from "@/lib/catalogProducts";
+import { cn } from "@/lib/utils";
 
 type CatalogoSearch = {
   created?: string;
@@ -36,6 +37,8 @@ function CatalogoPage() {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const loadCatalog = useCallback(async (): Promise<CatalogProduct[]> => {
     setLoading(true);
@@ -71,6 +74,32 @@ function CatalogoPage() {
       setBanner("Produto cadastrado com sucesso e já disponível no catálogo.");
     }
   }, [created]);
+
+  const categories = useMemo(() => {
+    const unique = Array.from(
+      new Set(products.map((product) => product.categoria).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return unique;
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const matchesCategory =
+        selectedCategory === "all" || product.categoria === selectedCategory;
+
+      if (!matchesCategory) return false;
+      if (!query) return true;
+
+      return (
+        product.nome.toLowerCase().includes(query) ||
+        product.clube.toLowerCase().includes(query) ||
+        product.categoria.toLowerCase().includes(query) ||
+        product.tipo.toLowerCase().includes(query)
+      );
+    });
+  }, [products, searchQuery, selectedCategory]);
 
   function openProductModal(product: CatalogProduct) {
     setSelectedProduct(product);
@@ -121,76 +150,144 @@ function CatalogoPage() {
   }
 
   return (
-    <div className="container-page py-12">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-neutral-900">Catálogo</h1>
-          <p className="mt-2 text-neutral-600">
-            Confira as camisas disponíveis e escolha o modelo ideal para você.
-          </p>
+    <div className="section-canvas min-h-[70vh]">
+      <div className="container-page py-12 lg:py-16">
+        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="eyebrow">Curadoria GG</p>
+            <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">
+              Escolha o seu <span className="editorial-serif">manto</span>
+            </h1>
+            <p className="mt-3 max-w-lg text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
+              Busque por nome, clube, categoria ou tipo e filtre o catálogo com a seleção GG Imports.
+            </p>
+          </div>
+
+          {isAdmin && (
+            <Link to="/admin/cadastrar-produto" className="btn-primary shrink-0">
+              <PackagePlus className="h-4 w-4" />
+              Cadastrar produto
+            </Link>
+          )}
         </div>
 
-        {isAdmin && (
-          <Link
-            to="/admin/cadastrar-produto"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--color-gold)]/40 bg-[var(--color-gold)]/10 px-5 py-2.5 text-sm font-semibold text-[var(--color-brand-dark)] transition-colors hover:bg-[var(--color-gold)]/20"
-          >
-            <PackagePlus className="h-4 w-4" />
-            Cadastrar Produto
-          </Link>
+        {banner && (
+          <div className="alert-success mb-6" role="status">
+            {banner}
+          </div>
         )}
+
+        {!loading && !error && products.length > 0 && (
+          <div className="mb-8 space-y-4">
+            <div className="relative max-w-xl">
+              <label htmlFor="catalog-search" className="field-label">
+                Buscar no catálogo
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+                <input
+                  id="catalog-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Nome, clube, categoria ou tipo..."
+                  className="field-input pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("all")}
+                className={cn("pill shrink-0", selectedCategory === "all" && "pill-active")}
+              >
+                Todos
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setSelectedCategory(category)}
+                  className={cn(
+                    "pill shrink-0",
+                    selectedCategory === category && "pill-active",
+                  )}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {loading && (
+          <div className="surface-card flex flex-col items-center justify-center gap-3 px-6 py-20 text-[var(--color-muted)]">
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--color-forest)]" />
+            <p className="text-sm font-medium">Carregando catálogo…</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="alert-error" role="alert">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && products.length === 0 && (
+          <div className="surface-card px-6 py-16 text-center">
+            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-[4px] bg-[var(--color-cream)] text-[var(--color-muted)]">
+              <Shirt className="h-6 w-6" />
+            </span>
+            <p className="editorial-title text-2xl">Nenhum produto disponível</p>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
+              O catálogo ainda não possui produtos ativos cadastrados.
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && products.length > 0 && filteredProducts.length === 0 && (
+          <div className="surface-card px-6 py-14 text-center">
+            <p className="editorial-title text-2xl">Nenhum resultado</p>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
+              Ajuste a busca ou o filtro de categoria para encontrar outros mantos.
+            </p>
+            <button
+              type="button"
+              className="btn-secondary mt-6"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("all");
+              }}
+            >
+              Limpar filtros
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && filteredProducts.length > 0 && (
+          <div className="grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 lg:grid-cols-3">
+            {filteredProducts.map((product) => (
+              <CatalogProductCard
+                key={`${product.id}-${product.nome}`}
+                product={product}
+                onClick={openProductModal}
+              />
+            ))}
+          </div>
+        )}
+
+        <ProductDetailsModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={closeProductModal}
+          isAdmin={isAdmin}
+          onAddToCart={addToCart}
+          onDeactivateProduct={handleDeactivateProduct}
+          onDeactivateSize={handleDeactivateSize}
+          onDeleteProduct={handleDeleteProduct}
+        />
       </div>
-
-      {banner && (
-        <div className="mb-6 rounded-2xl border border-[var(--color-brand-green)]/20 bg-[var(--color-brand-green)]/5 px-5 py-4 text-sm text-[var(--color-brand-green)]">
-          {banner}
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex items-center justify-center gap-2 py-20 text-neutral-600">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Carregando catálogo...
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && products.length === 0 && (
-        <div className="rounded-2xl border border-neutral-200 bg-white px-6 py-16 text-center shadow-soft">
-          <p className="font-display text-lg font-semibold text-neutral-900">Nenhum produto disponível</p>
-          <p className="mt-2 text-sm text-neutral-600">
-            O catálogo ainda não possui produtos ativos cadastrados.
-          </p>
-        </div>
-      )}
-
-      {!loading && !error && products.length > 0 && (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <CatalogProductCard
-              key={`${product.id}-${product.nome}`}
-              product={product}
-              onClick={openProductModal}
-            />
-          ))}
-        </div>
-      )}
-
-      <ProductDetailsModal
-        product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={closeProductModal}
-        isAdmin={isAdmin}
-        onAddToCart={addToCart}
-        onDeactivateProduct={handleDeactivateProduct}
-        onDeactivateSize={handleDeactivateSize}
-        onDeleteProduct={handleDeleteProduct}
-      />
     </div>
   );
 }

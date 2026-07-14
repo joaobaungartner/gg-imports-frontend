@@ -2,224 +2,387 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BadgeCheck,
-  Clock,
-  CreditCard,
-  Globe,
-  Headphones,
-  MapPin,
-  MessageCircle,
+  Loader2,
   Package,
   RefreshCw,
   Shield,
   Shirt,
-  Sparkles,
-  Star,
-  Trophy,
   Truck,
-  Users,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
-import { ProductCard } from "@/components/ProductCard";
-import { categories, products, type Category, type Product } from "@/data/products";
+import { useEffect, useMemo, useState } from "react";
+import {
+  listCategories,
+  listProducts,
+  type Category,
+} from "@/lib/api";
+import {
+  groupProductsByVariant,
+  type CatalogProduct,
+} from "@/lib/catalogProducts";
+import { formatCurrency } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
-
-/** Substitua pelo link real do WhatsApp quando disponível */
-const WHATSAPP_URL = "#";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  brasileirao: Trophy,
-  europeus: Globe,
-  selecoes: Shield,
-  retro: Clock,
-  infantil: Users,
-  "player-version": Zap,
-};
-
 const BENEFITS = [
-  { icon: Truck, title: "Envio para todo o Brasil", description: "Entrega em todo o território nacional" },
-  { icon: CreditCard, title: "Pagamento facilitado", description: "Pix, cartão e parcelamento" },
-  { icon: Shield, title: "Compra segura", description: "Processo transparente e protegido" },
-  { icon: MessageCircle, title: "Atendimento via WhatsApp", description: "Tire dúvidas antes e depois da compra" },
-  { icon: RefreshCw, title: "Troca fácil", description: "Suporte para ajuste de tamanho" },
+  { icon: BadgeCheck, title: "Qualidade verificada" },
+  { icon: Truck, title: "Envio para todo Brasil" },
+  { icon: RefreshCw, title: "Troca descomplicada" },
+  { icon: Shield, title: "Compra segura" },
 ] as const;
+
+const CATEGORY_ICONS: LucideIcon[] = [Shirt, Shield, Package, BadgeCheck, Truck, RefreshCw];
 
 const HOW_TO_BUY_STEPS = [
-  { step: 1, title: "Escolha sua camisa", description: "Navegue pelo catálogo e encontre seu time" },
-  { step: 2, title: "Selecione tamanho e modelo", description: "Fan, player version, infantil ou retrô" },
-  { step: 3, title: "Finalize o pedido", description: "Compre pelo site ou fale conosco no WhatsApp" },
-  { step: 4, title: "Receba em casa", description: "Acompanhe o envio ou tire dúvidas a qualquer momento" },
-] as const;
-
-const TRUST_CARDS = [
-  { icon: Sparkles, text: "Produtos selecionados com atenção aos detalhes" },
-  { icon: Headphones, text: "Atendimento próximo antes e depois da compra" },
-  { icon: Shirt, text: "Modelos para torcedores, colecionadores e presentes" },
+  {
+    step: "01",
+    title: "Escolha sua camisa",
+    description: "Navegue pelo catálogo e encontre o time, o estilo e o tamanho certos.",
+  },
+  {
+    step: "02",
+    title: "Revise o pedido",
+    description: "Confira modelo, tamanho e condições antes de finalizar.",
+  },
+  {
+    step: "03",
+    title: "Finalize com tranquilidade",
+    description: "Pagamento seguro e acompanhamento do envio até a sua casa.",
+  },
 ] as const;
 
 function HomePage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHome() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [apiProducts, apiCategories] = await Promise.all([
+          listProducts(true),
+          listCategories(),
+        ]);
+
+        if (cancelled) return;
+
+        const categoryNames = Object.fromEntries(
+          apiCategories.map((category) => [category.id, category.nome]),
+        );
+
+        setCategories(apiCategories);
+        setProducts(groupProductsByVariant(apiProducts, categoryNames));
+      } catch {
+        if (!cancelled) {
+          setError("Não foi possível carregar a vitrine. Tente novamente em instantes.");
+          setProducts([]);
+          setCategories([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadHome();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const featured = products[0] ?? null;
+  const secondaryImages = useMemo(
+    () =>
+      products
+        .slice(1)
+        .filter((product) => Boolean(product.imagem_url))
+        .slice(0, 2),
+    [products],
+  );
   const bestSellers = products.slice(0, 4);
-  const launches = products.filter((p: Product) => p.isNew);
-  const promos = products.filter((p: Product) => p.onSale);
+  const launches = products.slice(4, 8);
+  const promotions = products.slice(8, 12);
 
   return (
-    <div className="overflow-x-hidden">
-      <HeroSection />
+    <div className="overflow-x-hidden bg-[var(--color-canvas)]">
+      <HeroSection
+        loading={loading}
+        featured={featured}
+        secondaryImages={secondaryImages}
+        productCount={products.length}
+      />
       <BenefitsBar />
-      <CategoriesSection />
-      <ProductGridSection
-        id="mais-vendidos"
-        title="Mais vendidos"
-        subtitle="Os modelos que os torcedores mais pedem"
-        items={bestSellers}
-        linkTo="/catalogo"
-        linkLabel="Ver todos"
-      />
-      <ProductGridSection
-        id="lancamentos"
-        title="Lançamentos"
-        subtitle="Novidades que acabaram de chegar"
-        items={launches}
-        linkTo="/lancamentos"
-        linkLabel="Ver lançamentos"
-        accent
-      />
-      <ProductGridSection
-        id="promocoes"
-        title="Promoções"
-        subtitle="Ofertas por tempo limitado"
-        items={promos}
-        linkTo="/promocoes"
-        linkLabel="Ver promoções"
-      />
+
+      {error ? (
+        <section className="container-page py-16">
+          <div className="alert-error mx-auto max-w-xl text-center">{error}</div>
+        </section>
+      ) : (
+        <>
+          <CategoriesSection loading={loading} categories={categories} />
+          <ProductGridSection
+            id="mais-vendidos"
+            eyebrow="Seleção"
+            title="Mais vendidos"
+            subtitle="Modelos que os torcedores mais procuram na GG Imports."
+            items={bestSellers}
+            loading={loading}
+            linkTo="/catalogo"
+            linkLabel="Ver catálogo"
+          />
+          <ProductGridSection
+            id="lancamentos"
+            eyebrow="Chegou agora"
+            title="Lançamentos"
+            subtitle="Peças recentes para vestir a temporada com estilo."
+            items={launches}
+            loading={loading}
+            linkTo="/lancamentos"
+            linkLabel="Ver lançamentos"
+            cream
+          />
+          <ProductGridSection
+            id="promocoes"
+            eyebrow="Oportunidade"
+            title="Promoções"
+            subtitle="Condições especiais para renovar o guarda-roupa de torcedor."
+            items={promotions}
+            loading={loading}
+            linkTo="/promocoes"
+            linkLabel="Ver promoções"
+          />
+        </>
+      )}
+
       <HowToBuySection />
-      <TrustSection />
       <FinalCTA />
     </div>
   );
 }
 
-function HeroSection() {
+function HeroSection({
+  loading,
+  featured,
+  secondaryImages,
+  productCount,
+}: {
+  loading: boolean;
+  featured: CatalogProduct | null;
+  secondaryImages: CatalogProduct[];
+  productCount: number;
+}) {
   return (
-    <section className="jersey-bg pitch-pattern relative overflow-hidden">
-      <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-[var(--color-gold)]/10 blur-3xl" />
-      <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-[var(--color-brand-green-light)]/30 blur-3xl" />
+    <section className="relative overflow-hidden section-cream">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--color-lime) 28%, transparent), transparent 42%), radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--color-forest-mid) 12%, transparent), transparent 36%)",
+        }}
+      />
 
-      <div className="container-page relative grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-12 lg:py-20">
+      <div className="container-page relative grid items-center gap-12 py-14 lg:grid-cols-2 lg:gap-16 lg:py-20">
         <div className="max-w-xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-sm">
-            <Star className="h-3.5 w-3.5 text-gold" />
-            Qualidade premium importada
-          </span>
-
-          <h1 className="font-display mt-5 text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Camisas de futebol importadas com{" "}
-            <span className="text-gold">qualidade premium</span>
-          </h1>
-
-          <p className="mt-5 text-base leading-relaxed text-neutral-300 sm:text-lg">
-            Brasileirão, europeus, seleções, retrô, infantil e player version — tudo em um só lugar,
-            com pronta entrega em modelos selecionados.
+          <p className="eyebrow">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-lime)]" />
+            Nova coleção
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/catalogo"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-gold)] px-6 py-3 text-sm font-semibold text-[var(--color-brand-dark)] shadow-elevated transition-transform hover:scale-[1.02]"
-            >
-              Ver catálogo
+          <h1 className="editorial-title mt-5 text-4xl sm:text-5xl lg:text-[4.25rem]">
+            Vista sua <span className="editorial-serif">paixão.</span>
+          </h1>
+
+          <p className="mt-6 max-w-md text-base leading-relaxed text-[var(--color-muted)] sm:text-lg">
+            Camisas que carregam história, rivalidade e memória. Curadoria editorial para quem
+            vive o futebol além do placar.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <Link to="/catalogo" className="btn-primary">
+              Explorar catálogo
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a
-              href={WHATSAPP_URL}
-              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Comprar pelo WhatsApp
-            </a>
+            <Link to="/como-comprar" className="btn-ghost">
+              Como comprar
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-neutral-300">
-            <li className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gold" />
-              Envio para todo Brasil
-            </li>
-            <li className="flex items-center gap-2">
-              <BadgeCheck className="h-4 w-4 text-gold" />
-              Pix com desconto
-            </li>
-            <li className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-gold" />
-              Atendimento rápido
-            </li>
-          </ul>
-        </div>
-
-        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-          <div className="jersey-card-visual relative overflow-hidden rounded-3xl p-6 shadow-elevated sm:p-8">
-            <div className="absolute right-4 top-4 rounded-full bg-[var(--color-gold)] px-3 py-1 text-xs font-bold text-[var(--color-brand-dark)]">
-              PRONTA ENTREGA
-            </div>
-
-            <div className="flex flex-col items-center pt-4">
-              <div className="relative">
-                <div className="h-56 w-44 rounded-t-[3rem] rounded-b-xl bg-gradient-to-b from-red-700 to-red-900 shadow-elevated sm:h-64 sm:w-52">
-                  <div className="absolute inset-x-0 top-[22%] mx-auto h-3 w-[50%] rounded-full bg-black/20" />
-                  <div className="absolute inset-x-0 top-[36%] flex justify-center gap-1.5">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <span key={i} className="h-7 w-0.5 rounded-full bg-white/30" />
-                    ))}
-                  </div>
-                  <div className="absolute inset-x-0 bottom-6 flex justify-center">
-                    <span className="rounded bg-white/90 px-2 py-0.5 text-[10px] font-bold tracking-widest text-red-900">
-                      GG IMPORTS
-                    </span>
-                  </div>
-                </div>
-                <div className="absolute -right-6 top-8 h-48 w-36 rounded-t-[2.5rem] rounded-b-lg bg-gradient-to-b from-sky-700 to-sky-900 opacity-60 shadow-soft sm:h-52 sm:w-40" />
-              </div>
-
-              <div className="mt-6 grid w-full grid-cols-3 gap-2 text-center">
-                {[
-                  { label: "Clubes BR", value: "50+" },
-                  { label: "Europa", value: "80+" },
-                  { label: "Seleções", value: "30+" },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl bg-white/8 px-2 py-3">
-                    <p className="font-display text-lg font-bold text-gold">{stat.value}</p>
-                    <p className="text-[10px] text-neutral-400">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--color-muted)]">
+            <span className="inline-flex items-center gap-2">
+              <Truck className="h-4 w-4 text-[var(--color-forest-mid)]" />
+              Envio para todo o Brasil
+            </span>
+            {!loading && productCount > 0 ? (
+              <span className="inline-flex items-center gap-2">
+                <Shirt className="h-4 w-4 text-[var(--color-forest-mid)]" />
+                {productCount} {productCount === 1 ? "modelo" : "modelos"} no catálogo
+              </span>
+            ) : null}
           </div>
         </div>
+
+        <HeroVisual
+          loading={loading}
+          featured={featured}
+          secondaryImages={secondaryImages}
+        />
       </div>
     </section>
   );
 }
 
+function HeroVisual({
+  loading,
+  featured,
+  secondaryImages,
+}: {
+  loading: boolean;
+  featured: CatalogProduct | null;
+  secondaryImages: CatalogProduct[];
+}) {
+  if (loading) {
+    return (
+      <div className="surface-card flex min-h-[420px] items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-3 text-[var(--color-muted)]">
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-forest)]" />
+          <p className="text-sm">Carregando vitrine…</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+      <div className="absolute -right-3 top-8 hidden h-40 w-28 bg-[var(--color-lime)]/70 sm:block lg:-right-6" />
+      <div className="absolute -bottom-4 -left-4 hidden h-24 w-24 bg-[var(--color-forest)] sm:block" />
+
+      <div className="relative grid gap-3 sm:grid-cols-[1.4fr_0.9fr]">
+        <Link
+          to="/catalogo"
+          className="surface-card group relative overflow-hidden transition-transform duration-300 hover:-translate-y-1"
+        >
+          <div className="relative aspect-[4/5] bg-[var(--color-cream)]">
+            {featured?.imagem_url ? (
+              <img
+                src={featured.imagem_url}
+                alt={featured.nome}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              />
+            ) : (
+              <ProductImageFallback large />
+            )}
+            <span className="tag-lime absolute left-3 top-3">Destaque</span>
+          </div>
+          <div className="border-t border-[var(--color-line)] bg-white p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
+              {featured?.clube ?? "GG Imports"}
+            </p>
+            <p className="font-display mt-1 line-clamp-2 text-base font-bold text-[var(--color-ink)]">
+              {featured?.nome ?? "Explore o catálogo"}
+            </p>
+            {featured ? (
+              <p className="mt-2 text-sm font-semibold text-[var(--color-forest)]">
+                {formatCurrency(featured.preco)}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-[var(--color-muted)]">Produtos em breve</p>
+            )}
+          </div>
+        </Link>
+
+        <div className="flex flex-col gap-3">
+          {(secondaryImages.length > 0
+            ? secondaryImages
+            : [null, null]
+          ).map((product, index) => (
+            <Link
+              key={product?.id ?? `fallback-${index}`}
+              to="/catalogo"
+              className="surface-card group relative flex-1 overflow-hidden transition-transform duration-300 hover:-translate-y-0.5"
+            >
+              <div className="relative aspect-[5/4] bg-[var(--color-cream)] sm:aspect-auto sm:min-h-[140px] sm:flex-1">
+                {product?.imagem_url ? (
+                  <img
+                    src={product.imagem_url}
+                    alt={product.nome}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                ) : (
+                  <ProductImageFallback compact tone={index === 0 ? "forest" : "cream"} />
+                )}
+              </div>
+            </Link>
+          ))}
+
+          <div className="surface-card flex items-center gap-3 bg-[var(--color-forest)] p-4 text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-lime)] text-[var(--color-ink)]">
+              <BadgeCheck className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">Curadoria real</p>
+              <p className="text-xs text-white/65">Imagens e preços do catálogo</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductImageFallback({
+  large,
+  compact,
+  tone = "cream",
+}: {
+  large?: boolean;
+  compact?: boolean;
+  tone?: "cream" | "forest";
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-full w-full flex-col items-center justify-center gap-2",
+        tone === "forest"
+          ? "bg-[var(--color-forest)] text-[var(--color-lime)]"
+          : "bg-[var(--color-cream)] text-[var(--color-forest)]",
+      )}
+    >
+      <Shirt className={cn(large ? "h-14 w-14" : compact ? "h-8 w-8" : "h-10 w-10")} />
+      {!compact ? (
+        <span className="text-xs font-medium uppercase tracking-[0.12em] opacity-70">
+          Camisa
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function BenefitsBar() {
   return (
-    <section className="border-b border-neutral-200 bg-[var(--color-surface)]">
-      <div className="container-page py-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {BENEFITS.map((benefit) => (
+    <section className="border-y border-[var(--color-line)] bg-[var(--color-canvas)]">
+      <div className="container-page">
+        <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4">
+          {BENEFITS.map((benefit, index) => (
             <div
               key={benefit.title}
-              className="flex items-start gap-3 rounded-2xl bg-white p-4 shadow-soft"
+              className={cn(
+                "flex items-center gap-3 px-1 py-5 sm:px-4",
+                index < BENEFITS.length - 1 && "lg:border-r lg:border-[var(--color-line)]",
+              )}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-brand-green)]/10 text-[var(--color-brand-green)]">
-                <benefit.icon className="h-5 w-5" />
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[var(--color-line)] bg-[var(--color-cream)] text-[var(--color-forest)]">
+                <benefit.icon className="h-4 w-4" />
               </span>
-              <div>
-                <p className="text-sm font-semibold text-neutral-900">{benefit.title}</p>
-                <p className="mt-0.5 text-xs text-neutral-500">{benefit.description}</p>
-              </div>
+              <p className="text-sm font-semibold text-[var(--color-ink)]">{benefit.title}</p>
             </div>
           ))}
         </div>
@@ -228,114 +391,189 @@ function BenefitsBar() {
   );
 }
 
-function CategoriesSection() {
+function CategoriesSection({
+  loading,
+  categories,
+}: {
+  loading: boolean;
+  categories: Category[];
+}) {
   return (
     <section className="container-page py-14 lg:py-18">
-      <div className="mb-8 text-center sm:mb-10">
-        <h2 className="font-display text-2xl font-bold text-neutral-900 sm:text-3xl">
-          Explore por categoria
-        </h2>
-        <p className="mt-2 text-neutral-600">Encontre a camisa ideal para o seu estilo</p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Categorias</p>
+          <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">Explore por categoria</h2>
+          <p className="mt-2 max-w-lg text-[var(--color-muted)]">
+            Encontre a camisa ideal para o seu estilo de torcer.
+          </p>
+        </div>
+        <Link to="/catalogo" className="btn-ghost">
+          Ver tudo
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {categories.map((category: Category) => {
-          const Icon = CATEGORY_ICONS[category.id] ?? Shirt;
-          return (
-            <Link
-              key={category.id}
-              to="/catalogo"
-              className="group flex items-center gap-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-[var(--color-brand-green)]/30 hover:shadow-elevated"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-brand-green)] text-white transition-transform group-hover:scale-110">
-                <Icon className="h-6 w-6" />
-              </span>
-              <div>
-                <p className="font-display font-semibold text-neutral-900">{category.name}</p>
-                <p className="text-sm text-neutral-500">{category.description}</p>
-              </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-neutral-400 transition-transform group-hover:translate-x-1 group-hover:text-[var(--color-brand-green)]" />
-            </Link>
-          );
-        })}
-      </div>
+      {loading ? (
+        <SectionLoading label="Carregando categorias…" />
+      ) : categories.length === 0 ? (
+        <EmptyBlock message="Categorias em breve. Enquanto isso, explore o catálogo completo." />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category, index) => {
+            const Icon = CATEGORY_ICONS[index % CATEGORY_ICONS.length];
+            return (
+              <Link
+                key={category.id}
+                to="/catalogo"
+                className="surface-card group flex items-center gap-4 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--color-forest)]/25"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-[var(--color-forest)] text-white transition-transform duration-300 group-hover:scale-105">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display font-semibold text-[var(--color-ink)]">
+                    {category.nome}
+                  </p>
+                  {category.descricao ? (
+                    <p className="mt-0.5 line-clamp-2 text-sm text-[var(--color-muted)]">
+                      {category.descricao}
+                    </p>
+                  ) : null}
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-[var(--color-muted)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--color-forest)]" />
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
 
 function ProductGridSection({
   id,
+  eyebrow,
   title,
   subtitle,
   items,
+  loading,
   linkTo,
   linkLabel,
-  accent,
+  cream,
 }: {
   id: string;
+  eyebrow: string;
   title: string;
   subtitle: string;
-  items: Product[];
+  items: CatalogProduct[];
+  loading: boolean;
   linkTo: "/catalogo" | "/lancamentos" | "/promocoes";
   linkLabel: string;
-  accent?: boolean;
+  cream?: boolean;
 }) {
   return (
-    <section id={id} className={cn("py-14 lg:py-16", accent && "bg-[var(--color-surface)]")}>
+    <section id={id} className={cn("py-14 lg:py-16", cream && "section-cream")}>
       <div className="container-page">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-neutral-900 sm:text-3xl">{title}</h2>
-            <p className="mt-1 text-neutral-600">{subtitle}</p>
+            <p className="eyebrow">{eyebrow}</p>
+            <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">{title}</h2>
+            <p className="mt-2 max-w-lg text-[var(--color-muted)]">{subtitle}</p>
           </div>
-          <Link
-            to={linkTo}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-brand-green)] hover:underline"
-          >
+          <Link to={linkTo} className="btn-ghost">
             {linkLabel}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <SectionLoading label="Carregando produtos…" />
+        ) : items.length === 0 ? (
+          <EmptyBlock message="Nenhum produto nesta seleção por enquanto. Veja o catálogo completo." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {items.map((product) => (
+              <HomeProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
+function HomeProductCard({ product }: { product: CatalogProduct }) {
+  return (
+    <Link
+      to="/catalogo"
+      className="surface-card group flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-[var(--color-cream)]">
+        {product.imagem_url ? (
+          <img
+            src={product.imagem_url}
+            alt={product.nome}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <ProductImageFallback />
+        )}
+        {!product.inStock ? (
+          <span className="absolute bottom-3 left-3 rounded-full bg-[var(--color-ink)]/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+            Sob encomenda
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-1.5 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]">
+          {product.clube}
+        </p>
+        <h3 className="font-display line-clamp-2 text-sm font-bold leading-snug text-[var(--color-ink)] sm:text-[15px]">
+          {product.nome}
+        </h3>
+        <p className="text-xs text-[var(--color-muted)]">
+          {product.categoria} · {product.tipo}
+        </p>
+        <p className="mt-auto pt-3 font-display text-base font-bold text-[var(--color-forest)]">
+          {formatCurrency(product.preco)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 function HowToBuySection() {
   return (
-    <section className="border-y border-neutral-200 bg-white py-14 lg:py-16">
+    <section className="border-y border-[var(--color-line)] bg-[var(--color-canvas)] py-14 lg:py-16">
       <div className="container-page">
-        <div className="mb-10 text-center">
-          <h2 className="font-display text-2xl font-bold text-neutral-900 sm:text-3xl">Como comprar</h2>
-          <p className="mt-2 text-neutral-600">Simples, rápido e com suporte em cada etapa</p>
+        <div className="mb-10 max-w-xl">
+          <p className="eyebrow">Simples e claro</p>
+          <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">Como comprar</h2>
+          <p className="mt-2 text-[var(--color-muted)]">
+            Do clique ao envio, um processo direto — com suporte quando você precisar.
+          </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           {HOW_TO_BUY_STEPS.map((step) => (
-            <div
-              key={step.step}
-              className="relative rounded-2xl border border-neutral-200/80 p-6 shadow-soft"
-            >
-              <span className="font-display flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-gold)] text-sm font-bold text-[var(--color-brand-dark)]">
+            <div key={step.step} className="surface-card p-6">
+              <span className="font-serif text-3xl italic text-[var(--color-forest-mid)]">
                 {step.step}
               </span>
-              <h3 className="font-display mt-4 font-semibold text-neutral-900">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-600">{step.description}</p>
+              <h3 className="font-display mt-4 text-lg font-bold text-[var(--color-ink)]">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+                {step.description}
+              </p>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
-          <Link
-            to="/como-comprar"
-            className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-6 py-2.5 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-50"
-          >
+        <div className="mt-8">
+          <Link to="/como-comprar" className="btn-secondary">
             Saiba mais
             <ArrowRight className="h-4 w-4" />
           </Link>
@@ -345,60 +583,63 @@ function HowToBuySection() {
   );
 }
 
-function TrustSection() {
+function FinalCTA() {
   return (
-    <section className="bg-[var(--color-brand-dark)] py-14 text-white lg:py-16">
-      <div className="container-page">
-        <div className="mb-10 text-center">
-          <h2 className="font-display text-2xl font-bold sm:text-3xl">
-            Por que escolher a <span className="text-gold">GG Imports</span>
+    <section className="container-page py-14 lg:py-20">
+      <div className="relative overflow-hidden border border-[var(--color-line)] bg-[var(--color-forest)] px-6 py-12 sm:px-12 sm:py-16">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-[var(--color-lime)]/20 blur-2xl" />
+        <div className="relative max-w-2xl">
+          <p className="eyebrow !text-white/55">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-lime)]" />
+            GG Imports
+          </p>
+          <h2 className="editorial-title mt-3 text-3xl text-white sm:text-4xl lg:text-5xl">
+            Pronto para vestir a{" "}
+            <span className="font-serif italic text-[var(--color-lime)]">camisa</span> do seu
+            time?
           </h2>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-3">
-          {TRUST_CARDS.map((card) => (
-            <div key={card.text} className="jersey-card-visual rounded-2xl p-6 text-center">
-              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-gold)]/20 text-gold">
-                <card.icon className="h-6 w-6" />
-              </span>
-              <p className="mt-4 text-sm leading-relaxed text-neutral-300">{card.text}</p>
-            </div>
-          ))}
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/65 sm:text-base">
+            Explore o catálogo completo. Enviamos para todo o Brasil.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/catalogo"
+              className="inline-flex items-center gap-2 rounded-[4px] bg-[var(--color-lime)] px-5 py-3 text-sm font-semibold text-[var(--color-ink)] transition-transform hover:-translate-y-0.5"
+            >
+              Explorar catálogo
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              to="/promocoes"
+              className="inline-flex items-center gap-2 rounded-[4px] border border-white/25 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              Ver promoções
+            </Link>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FinalCTA() {
+function SectionLoading({ label }: { label: string }) {
   return (
-    <section className="container-page py-14 lg:py-20">
-      <div className="relative overflow-hidden rounded-3xl jersey-bg pitch-pattern px-6 py-12 text-center shadow-elevated sm:px-12 sm:py-16">
-        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[var(--color-gold)]/15 blur-2xl" />
-        <Package className="relative mx-auto h-10 w-10 text-gold" />
-        <h2 className="font-display relative mt-4 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-          Pronto para vestir a camisa do seu time?
-        </h2>
-        <p className="relative mx-auto mt-3 max-w-lg text-neutral-300">
-          Explore o catálogo completo ou fale com a gente no WhatsApp. Enviamos para todo o Brasil.
-        </p>
-        <div className="relative mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            to="/catalogo"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--color-gold)] px-6 py-3 text-sm font-semibold text-[var(--color-brand-dark)] transition-transform hover:scale-[1.02]"
-          >
-            Explorar catálogo
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <a
-            href={WHATSAPP_URL}
-            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Falar no WhatsApp
-          </a>
-        </div>
-      </div>
-    </section>
+    <div className="surface-card flex min-h-[180px] items-center justify-center gap-3 text-[var(--color-muted)]">
+      <Loader2 className="h-5 w-5 animate-spin text-[var(--color-forest)]" />
+      <p className="text-sm">{label}</p>
+    </div>
+  );
+}
+
+function EmptyBlock({ message }: { message: string }) {
+  return (
+    <div className="surface-card px-6 py-10 text-center">
+      <Shirt className="mx-auto h-8 w-8 text-[var(--color-muted)]" />
+      <p className="mt-3 text-sm text-[var(--color-muted)]">{message}</p>
+      <Link to="/catalogo" className="btn-ghost mt-4 inline-flex">
+        Ir ao catálogo
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
   );
 }

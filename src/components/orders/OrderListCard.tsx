@@ -15,12 +15,12 @@ type OrderListCardProps = {
 
 export function OrderListCard({ order }: OrderListCardProps) {
   return (
-    <article className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-soft sm:p-6">
+    <article className="surface-card p-5 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-3">
           <div>
-            <h2 className="font-display text-xl font-bold text-neutral-900">Pedido #{order.id}</h2>
-            <p className="mt-1 text-sm text-neutral-600">
+            <h2 className="editorial-title text-xl">Pedido #{order.id}</h2>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               Realizado em {formatOrderDate(order.data_pedido)}
             </p>
           </div>
@@ -33,24 +33,24 @@ export function OrderListCard({ order }: OrderListCardProps) {
 
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-neutral-500">Itens</dt>
-              <dd className="font-medium text-neutral-900">{order.item_count}</dd>
+              <dt className="text-[var(--color-muted)]">Itens</dt>
+              <dd className="font-medium text-[var(--color-ink)]">{order.item_count}</dd>
             </div>
             <div>
-              <dt className="text-neutral-500">Total</dt>
-              <dd className="font-semibold text-[var(--color-brand-green)]">
+              <dt className="text-[var(--color-muted)]">Total</dt>
+              <dd className="font-semibold text-[var(--color-forest)]">
                 {formatCurrency(Number(order.valor_total))}
               </dd>
             </div>
             <div>
-              <dt className="text-neutral-500">Pagamento</dt>
-              <dd className="font-medium text-neutral-900">
+              <dt className="text-[var(--color-muted)]">Pagamento</dt>
+              <dd className="font-medium text-[var(--color-ink)]">
                 {formatPaymentMethod(order.payment_method)}
               </dd>
             </div>
             <div>
-              <dt className="text-neutral-500">Entrega</dt>
-              <dd className="font-medium text-neutral-900">
+              <dt className="text-[var(--color-muted)]">Entrega</dt>
+              <dd className="font-medium text-[var(--color-ink)]">
                 {formatShippingMethod(order.shipping_method)}
               </dd>
             </div>
@@ -60,7 +60,7 @@ export function OrderListCard({ order }: OrderListCardProps) {
         <Link
           to="/pedido/$orderId"
           params={{ orderId: String(order.id) }}
-          className="inline-flex shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-green)] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          className="btn-primary shrink-0"
         >
           Ver detalhes
         </Link>

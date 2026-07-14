@@ -77,117 +77,117 @@ function AcompanharPedidoPage() {
   }
 
   return (
-    <div className="container-page py-12 lg:py-16">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8 text-center">
-          <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-green)]/10 text-[var(--color-brand-green)]">
-            <PackageSearch className="h-7 w-7" />
-          </span>
-          <h1 className="font-display text-3xl font-bold text-neutral-900">Acompanhe seu pedido</h1>
-          <p className="mt-2 text-neutral-600">
-            {isAuthenticated
-              ? "Veja o status dos seus pedidos e acesse os detalhes de cada um."
-              : "Informe o número do pedido e seus dados para consultar o status."}
-          </p>
-        </div>
-
-        {!isAuthenticated && (
-          <form
-            onSubmit={handleTrackSubmit}
-            className="mb-8 rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="orderId" className="mb-1.5 block text-sm font-medium text-neutral-700">
-                  Número do pedido
-                </label>
-                <input
-                  id="orderId"
-                  value={orderId}
-                  onChange={(e) => setOrderId(e.target.value)}
-                  placeholder="Ex.: 123"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand-green)] focus:ring-2 focus:ring-[var(--color-brand-green)]/20"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="identifier" className="mb-1.5 block text-sm font-medium text-neutral-700">
-                  E-mail, CPF ou telefone
-                </label>
-                <input
-                  id="identifier"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Dado usado no checkout"
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand-green)] focus:ring-2 focus:ring-[var(--color-brand-green)]/20"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={searching}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              {searching ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Buscando...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" />
-                  Buscar pedido
-                </>
-              )}
-            </button>
-
-            <p className="mt-4 text-sm text-neutral-500">
-              Tem conta?{" "}
-              <Link to="/login" search={{ redirect: "/acompanhar-pedido" }} className="font-semibold text-[var(--color-brand-green)] hover:underline">
-                Faça login
-              </Link>{" "}
-              para ver todos os seus pedidos automaticamente.
+    <div className="section-canvas min-h-[70vh]">
+      <div className="container-page py-12 lg:py-16">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-10 text-center">
+            <p className="eyebrow justify-center">
+              <PackageSearch className="h-3.5 w-3.5" />
+              Rastreamento
             </p>
-          </form>
-        )}
+            <h1 className="editorial-title mt-3 text-3xl sm:text-4xl">
+              Acompanhe seu <span className="editorial-serif">pedido</span>
+            </h1>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
+              {isAuthenticated
+                ? "Veja o status dos seus pedidos e acesse os detalhes de cada um."
+                : "Informe o número do pedido e seus dados para consultar o status."}
+            </p>
+          </div>
 
-        {error && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+          {!isAuthenticated && (
+            <form onSubmit={handleTrackSubmit} className="surface-card mb-8 p-6 sm:p-8">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="orderId" className="field-label">
+                    Número do pedido
+                  </label>
+                  <input
+                    id="orderId"
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value)}
+                    placeholder="Ex.: 123"
+                    className="field-input"
+                  />
+                </div>
 
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-[var(--color-brand-green)]" />
-          </div>
-        ) : orders.length > 0 ? (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <OrderListCard key={order.id} order={order} />
-            ))}
-          </div>
-        ) : (
-          !searching &&
-          !loading &&
-          (isAuthenticated || hasSearched) && (
-            <div className="rounded-2xl border border-neutral-200/80 bg-white px-6 py-12 text-center shadow-soft">
-              <p className="text-lg font-medium text-neutral-900">Nenhum pedido encontrado.</p>
-              <p className="mt-2 text-sm text-neutral-600">
-                {isAuthenticated
-                  ? "Quando você fizer um pedido, ele aparecerá aqui."
-                  : "Verifique o número do pedido e os dados informados."}
+                <div>
+                  <label htmlFor="identifier" className="field-label">
+                    E-mail, CPF ou telefone
+                  </label>
+                  <input
+                    id="identifier"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="Dado usado no checkout"
+                    className="field-input"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" disabled={searching} className="btn-primary mt-5 w-full sm:w-auto">
+                {searching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Buscando...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    Buscar pedido
+                  </>
+                )}
+              </button>
+
+              <p className="mt-4 text-sm text-[var(--color-muted)]">
+                Tem conta?{" "}
+                <Link
+                  to="/login"
+                  search={{ redirect: "/acompanhar-pedido" }}
+                  className="btn-ghost inline !p-0 font-semibold"
+                >
+                  Faça login
+                </Link>{" "}
+                para ver todos os seus pedidos automaticamente.
               </p>
-              <Link
-                to="/catalogo"
-                className="mt-6 inline-flex items-center justify-center rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              >
-                Ver catálogo
-              </Link>
+            </form>
+          )}
+
+          {error && (
+            <div className="alert-error mb-6" role="alert">
+              {error}
             </div>
-          )
-        )}
+          )}
+
+          {loading ? (
+            <div className="surface-card flex flex-col items-center justify-center gap-3 px-6 py-16 text-[var(--color-muted)]">
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--color-forest)]" />
+              <p className="text-sm font-medium">Carregando pedidos…</p>
+            </div>
+          ) : orders.length > 0 ? (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <OrderListCard key={order.id} order={order} />
+              ))}
+            </div>
+          ) : (
+            !searching &&
+            !loading &&
+            (isAuthenticated || hasSearched) && (
+              <div className="surface-card px-6 py-12 text-center">
+                <p className="editorial-title text-2xl">Nenhum pedido encontrado</p>
+                <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
+                  {isAuthenticated
+                    ? "Quando você fizer um pedido, ele aparecerá aqui."
+                    : "Verifique o número do pedido e os dados informados."}
+                </p>
+                <Link to="/catalogo" className="btn-primary mt-6 inline-flex">
+                  Ver catálogo
+                </Link>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   );

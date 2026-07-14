@@ -50,11 +50,8 @@ const CHECKOUT_STEPS: CheckoutStepDefinition[] = [
 type ShippingMethod = "ENTREGA" | "RETIRADA";
 type PaymentMethod = "PIX" | "CARTAO";
 
-const inputClassName =
-  "w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand-green)] focus:ring-2 focus:ring-[var(--color-brand-green)]/20";
-
-const readOnlyClassName =
-  "w-full rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-2.5 text-sm outline-none";
+const selectableCardClass =
+  "flex cursor-pointer items-start gap-3 rounded border border-line p-4 transition-colors has-checked:border-forest has-checked:bg-[color-mix(in_srgb,var(--color-lime)_18%,white)]";
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -293,16 +290,16 @@ function CheckoutPage() {
     switch (currentStep) {
       case 1:
         return (
-          <section className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-            <p className="mb-5 text-sm text-neutral-600">
+          <section className="surface-card p-5 sm:p-6">
+            <p className="mb-5 text-sm text-muted">
               Seus dados foram preenchidos automaticamente com sua conta.
             </p>
             {loadingProfile && (
-              <p className="mb-4 text-sm text-neutral-500">Carregando seus dados...</p>
+              <p className="mb-4 text-sm text-muted">Carregando seus dados...</p>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label htmlFor="customerName" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="customerName" className="field-label">
                   Nome completo
                 </label>
                 <input
@@ -310,11 +307,11 @@ function CheckoutPage() {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   readOnly={loadingProfile}
-                  className={readOnlyClassName}
+                  className="field-input"
                 />
               </div>
               <div>
-                <label htmlFor="customerEmail" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="customerEmail" className="field-label">
                   E-mail
                 </label>
                 <input
@@ -323,29 +320,29 @@ function CheckoutPage() {
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   readOnly={loadingProfile}
-                  className={readOnlyClassName}
+                  className="field-input"
                 />
               </div>
               <div>
-                <label htmlFor="customerPhone" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="customerPhone" className="field-label">
                   Telefone / WhatsApp
                 </label>
                 <input
                   id="customerPhone"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(formatPhone(e.target.value))}
-                  className={inputClassName}
+                  className="field-input"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label htmlFor="customerCpf" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="customerCpf" className="field-label">
                   CPF
                 </label>
                 <input
                   id="customerCpf"
                   value={customerCpf}
                   onChange={(e) => setCustomerCpf(formatCpf(e.target.value))}
-                  className={inputClassName}
+                  className="field-input"
                 />
               </div>
             </div>
@@ -354,13 +351,13 @@ function CheckoutPage() {
 
       case 2:
         return (
-          <section className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-            <p className="mb-5 text-sm text-neutral-600">
+          <section className="surface-card p-5 sm:p-6">
+            <p className="mb-5 text-sm text-muted">
               Digite o CEP para preencher rua, bairro, cidade e estado automaticamente.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="cep" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="cep" className="field-label">
                   CEP
                 </label>
                 <div className="relative">
@@ -369,63 +366,78 @@ function CheckoutPage() {
                     value={cep}
                     onChange={(e) => handleCepChange(e.target.value)}
                     placeholder="00000-000"
-                    className={inputClassName}
+                    className="field-input"
                   />
                   {loadingCep && (
-                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-neutral-400" />
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted" />
                   )}
                 </div>
-                {cepError && <p className="mt-1 text-xs text-red-600">{cepError}</p>}
+                {cepError && <p className="mt-1.5 text-xs text-danger">{cepError}</p>}
               </div>
               <div className="sm:col-span-2">
-                <label htmlFor="street" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="street" className="field-label">
                   Rua
                 </label>
-                <input id="street" value={street} onChange={(e) => setStreet(e.target.value)} className={inputClassName} />
+                <input
+                  id="street"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  className="field-input"
+                />
               </div>
               <div>
-                <label htmlFor="number" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="number" className="field-label">
                   Número
                 </label>
-                <input id="number" value={number} onChange={(e) => setNumber(e.target.value)} className={inputClassName} />
+                <input
+                  id="number"
+                  value={number}
+                  onChange={(e) => setNumber(e.target.value)}
+                  className="field-input"
+                />
               </div>
               <div>
-                <label htmlFor="complement" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="complement" className="field-label">
                   Complemento
                 </label>
                 <input
                   id="complement"
                   value={complement}
                   onChange={(e) => setComplement(e.target.value)}
-                  className={inputClassName}
+                  className="field-input"
                 />
               </div>
               <div>
-                <label htmlFor="neighborhood" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="neighborhood" className="field-label">
                   Bairro
                 </label>
                 <input
                   id="neighborhood"
                   value={neighborhood}
                   onChange={(e) => setNeighborhood(e.target.value)}
-                  className={inputClassName}
+                  className="field-input"
                 />
               </div>
               <div>
-                <label htmlFor="city" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="city" className="field-label">
                   Cidade
                 </label>
-                <input id="city" value={city} onChange={(e) => setCity(e.target.value)} className={inputClassName} />
+                <input
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="field-input"
+                />
               </div>
               <div>
-                <label htmlFor="state" className="mb-1.5 block text-sm font-medium text-neutral-700">
+                <label htmlFor="state" className="field-label">
                   Estado
                 </label>
                 <select
                   id="state"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className={inputClassName}
+                  className="field-input"
                 >
                   {BRAZILIAN_STATES.map((uf) => (
                     <option key={uf} value={uf}>
@@ -440,53 +452,57 @@ function CheckoutPage() {
 
       case 3:
         return (
-          <section className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-            <p className="mb-5 text-sm text-neutral-600">
+          <section className="surface-card p-5 sm:p-6">
+            <p className="mb-5 text-sm text-muted">
               Escolha como deseja receber seus produtos.
             </p>
             <div className="space-y-3">
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-neutral-200 p-4 transition-colors has-checked:border-[var(--color-brand-green)] has-checked:bg-[var(--color-brand-green)]/5">
+              <label className={selectableCardClass}>
                 <input
                   type="radio"
                   name="shippingMethod"
                   value="ENTREGA"
                   checked={shippingMethod === "ENTREGA"}
                   onChange={() => setShippingMethod("ENTREGA")}
-                  className="mt-1"
+                  className="mt-1 accent-forest"
                 />
                 <span className="flex-1">
                   <span className="flex items-center justify-between gap-3">
-                    <span className="block text-sm font-semibold text-neutral-900">Entrega</span>
-                    <span className="text-sm font-semibold text-[var(--color-brand-green)]">
-                      {loadingShipping ? "Calculando..." : shippingCost > 0 ? formatCurrency(shippingCost) : "—"}
+                    <span className="block text-sm font-semibold text-ink">Entrega</span>
+                    <span className="text-sm font-semibold text-forest">
+                      {loadingShipping
+                        ? "Calculando..."
+                        : shippingCost > 0
+                          ? formatCurrency(shippingCost)
+                          : "—"}
                     </span>
                   </span>
-                  <span className="mt-1 block text-sm text-neutral-600">
+                  <span className="mt-1 block text-sm text-muted">
                     Frete calculado com base no CEP e quantidade de itens.
                   </span>
                   {!loadingShipping && shippingCost > 0 && (
-                    <span className="mt-1 block text-xs text-neutral-500">{shippingLabel}</span>
+                    <span className="mt-1 block text-xs text-muted">{shippingLabel}</span>
                   )}
                 </span>
               </label>
 
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-neutral-200 p-4 transition-colors has-checked:border-[var(--color-brand-green)] has-checked:bg-[var(--color-brand-green)]/5">
+              <label className={selectableCardClass}>
                 <input
                   type="radio"
                   name="shippingMethod"
                   value="RETIRADA"
                   checked={shippingMethod === "RETIRADA"}
                   onChange={() => setShippingMethod("RETIRADA")}
-                  className="mt-1"
+                  className="mt-1 accent-forest"
                 />
                 <span className="flex-1">
                   <span className="flex items-center justify-between gap-3">
-                    <span className="block text-sm font-semibold text-neutral-900">
+                    <span className="block text-sm font-semibold text-ink">
                       Retirada / combinar com a loja
                     </span>
-                    <span className="text-sm font-semibold text-[var(--color-brand-green)]">Grátis</span>
+                    <span className="text-sm font-semibold text-forest">Grátis</span>
                   </span>
-                  <span className="mt-1 block text-sm text-neutral-600">
+                  <span className="mt-1 block text-sm text-muted">
                     Combine diretamente conosco a retirada ou entrega local.
                   </span>
                 </span>
@@ -497,33 +513,33 @@ function CheckoutPage() {
 
       case 4:
         return (
-          <section className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-            <p className="mb-5 text-sm text-neutral-600">
+          <section className="surface-card p-5 sm:p-6">
+            <p className="mb-5 text-sm text-muted">
               Selecione como deseja pagar seu pedido.
             </p>
             <div className="space-y-3">
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-neutral-200 p-4 transition-colors has-checked:border-[var(--color-brand-green)] has-checked:bg-[var(--color-brand-green)]/5">
+              <label className={selectableCardClass}>
                 <input
                   type="radio"
                   name="paymentMethod"
                   value="PIX"
                   checked={paymentMethod === "PIX"}
                   onChange={() => setPaymentMethod("PIX")}
-                  className="mt-1"
+                  className="mt-1 accent-forest"
                 />
                 <span>
-                  <span className="block text-sm font-semibold text-neutral-900">Pix</span>
-                  <span className="mt-1 block text-sm text-neutral-600">
+                  <span className="block text-sm font-semibold text-ink">Pix</span>
+                  <span className="mt-1 block text-sm text-muted">
                     Você receberá as instruções de pagamento após criar o pedido.
                   </span>
                 </span>
               </label>
 
-              <label className="flex cursor-not-allowed items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 opacity-70">
+              <label className="flex cursor-not-allowed items-start gap-3 rounded border border-line bg-cream/50 p-4 opacity-60">
                 <input type="radio" name="paymentMethod" value="CARTAO" disabled className="mt-1" />
                 <span>
-                  <span className="block text-sm font-semibold text-neutral-900">Cartão de crédito</span>
-                  <span className="mt-1 block text-sm text-neutral-600">Em breve</span>
+                  <span className="block text-sm font-semibold text-ink">Cartão de crédito</span>
+                  <span className="mt-1 block text-sm text-muted">Em breve</span>
                 </span>
               </label>
             </div>
@@ -532,34 +548,34 @@ function CheckoutPage() {
 
       case 5:
         return (
-          <section className="space-y-4">
-            <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-              <h3 className="font-display text-lg font-bold text-neutral-900">Dados do cliente</h3>
-              <dl className="mt-4 space-y-2 text-sm">
+          <section className="space-y-3">
+            <div className="surface-card p-5 sm:p-6">
+              <h3 className="font-display text-base font-bold text-ink">Dados do cliente</h3>
+              <dl className="mt-4 space-y-2.5 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-500">Nome</dt>
-                  <dd className="text-right font-medium text-neutral-900">{customerName}</dd>
+                  <dt className="text-muted">Nome</dt>
+                  <dd className="text-right font-medium text-ink">{customerName}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-500">E-mail</dt>
-                  <dd className="text-right font-medium text-neutral-900">{customerEmail}</dd>
+                  <dt className="text-muted">E-mail</dt>
+                  <dd className="text-right font-medium text-ink">{customerEmail}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-500">Telefone</dt>
-                  <dd className="text-right font-medium text-neutral-900">{customerPhone}</dd>
+                  <dt className="text-muted">Telefone</dt>
+                  <dd className="text-right font-medium text-ink">{customerPhone}</dd>
                 </div>
                 {customerCpf && (
                   <div className="flex justify-between gap-4">
-                    <dt className="text-neutral-500">CPF</dt>
-                    <dd className="text-right font-medium text-neutral-900">{customerCpf}</dd>
+                    <dt className="text-muted">CPF</dt>
+                    <dd className="text-right font-medium text-ink">{customerCpf}</dd>
                   </div>
                 )}
               </dl>
             </div>
 
-            <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-              <h3 className="font-display text-lg font-bold text-neutral-900">Endereço de entrega</h3>
-              <p className="mt-4 text-sm text-neutral-700">
+            <div className="surface-card p-5 sm:p-6">
+              <h3 className="font-display text-base font-bold text-ink">Endereço de entrega</h3>
+              <p className="mt-4 text-sm leading-relaxed text-ink">
                 {street}, {number}
                 {complement ? ` — ${complement}` : ""}
                 <br />
@@ -569,24 +585,24 @@ function CheckoutPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-soft">
-              <h3 className="font-display text-lg font-bold text-neutral-900">Entrega e pagamento</h3>
-              <dl className="mt-4 space-y-2 text-sm">
+            <div className="surface-card p-5 sm:p-6">
+              <h3 className="font-display text-base font-bold text-ink">Entrega e pagamento</h3>
+              <dl className="mt-4 space-y-2.5 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-500">Entrega</dt>
-                  <dd className="text-right font-medium text-neutral-900">
+                  <dt className="text-muted">Entrega</dt>
+                  <dd className="text-right font-medium text-ink">
                     {shippingMethod === "RETIRADA" ? "Retirada/combinar com a loja" : shippingLabel}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-500">Frete</dt>
-                  <dd className="text-right font-medium text-neutral-900">
+                  <dt className="text-muted">Frete</dt>
+                  <dd className="text-right font-medium text-ink">
                     {shippingMethod === "RETIRADA" ? "Grátis" : formatCurrency(shippingCost)}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-neutral-500">Pagamento</dt>
-                  <dd className="text-right font-medium text-neutral-900">Pix</dd>
+                  <dt className="text-muted">Pagamento</dt>
+                  <dd className="text-right font-medium text-ink">Pix</dd>
                 </div>
               </dl>
             </div>
@@ -601,7 +617,7 @@ function CheckoutPage() {
   if (!isAuthenticated || items.length === 0) {
     return (
       <div className="container-page flex min-h-[40vh] items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-brand-green)]" />
+        <Loader2 className="h-8 w-8 animate-spin text-forest" />
       </div>
     );
   }
@@ -611,32 +627,25 @@ function CheckoutPage() {
 
   return (
     <div className="container-page py-12 lg:py-16">
-      <div className="mb-2">
-        <h1 className="font-display text-3xl font-bold text-neutral-900">Checkout</h1>
-        <p className="mt-2 text-neutral-600">
+      <div className="mb-6">
+        <p className="eyebrow mb-2">Pedido</p>
+        <h1 className="editorial-title text-3xl sm:text-4xl">Checkout</h1>
+        <p className="mt-2 max-w-xl text-sm text-muted">
           Finalize seu pedido em etapas simples e rápidas.
         </p>
       </div>
 
       <CheckoutStepper steps={CHECKOUT_STEPS} currentStep={currentStep} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <div>
-          {error && (
-            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert-error mb-5">{error}</div>}
 
           {renderStepContent()}
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             {!isFirstStep ? (
-              <button
-                type="button"
-                onClick={goToPreviousStep}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-6 py-3 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
-              >
+              <button type="button" onClick={goToPreviousStep} className="btn-secondary">
                 <ArrowLeft className="h-4 w-4" />
                 Voltar
               </button>
@@ -649,7 +658,7 @@ function CheckoutPage() {
                 type="button"
                 onClick={handleCreateOrder}
                 disabled={submitting || loadingProfile || loadingShipping}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto"
+                className="btn-primary sm:ml-auto"
               >
                 {submitting ? (
                   <>
@@ -668,7 +677,7 @@ function CheckoutPage() {
                 type="button"
                 onClick={goToNextStep}
                 disabled={loadingProfile || (currentStep === 3 && loadingShipping)}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-brand-green)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto"
+                className="btn-primary sm:ml-auto"
               >
                 Continuar
                 <ArrowRight className="h-4 w-4" />
