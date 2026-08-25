@@ -266,11 +266,7 @@ function CheckoutPage() {
         frete: shippingCost,
         items: items.map((item) => ({
           product_id: item.productId,
-          name: item.nome,
-          image_url: item.imagem_url,
-          size: item.tamanho,
           quantity: item.quantidade,
-          unit_price: item.preco,
         })),
       });
 

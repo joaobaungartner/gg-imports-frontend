@@ -353,11 +353,7 @@ export type ShippingAddressPayload = {
 
 export type CreateOrderItemPayload = {
   product_id: number;
-  name: string;
-  image_url?: string | null;
-  size: string;
   quantity: number;
-  unit_price: number;
 };
 
 export type CreateOrderPayload = {
