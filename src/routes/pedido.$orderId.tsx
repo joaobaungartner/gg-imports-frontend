@@ -1,9 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, Copy, Loader2, Shirt } from "lucide-react";
 import { useEffect, useState } from "react";
+import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import { ApiError, getOrderById, type OrderResponse } from "@/lib/api";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { getOrderConfirmation } from "@/lib/orderStorage";
+import {
+  customerStatusMessage,
+  formatOrderDateTime,
+  formatPaymentMethod,
+  formatShippingMethod,
+} from "@/lib/orderFormat";
+import { getOrderConfirmation, saveOrderConfirmation } from "@/lib/orderStorage";
 
 export const Route = createFileRoute("/pedido/$orderId")({
   component: PedidoConfirmacaoPage,
@@ -11,39 +19,13 @@ export const Route = createFileRoute("/pedido/$orderId")({
 
 const PIX_CONTACT = "(19) 99846-0550";
 
-function formatOrderDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "long",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function formatShippingMethod(method: string | null) {
-  if (method === "RETIRADA") return "Retirada/combinar com a loja";
-  if (method === "ENTREGA") return "Entrega";
-  if (method === "FRETE_A_COMBINAR") return "Entrega";
-  return "A combinar";
-}
-
-function formatStatus(status: string) {
-  const labels: Record<string, string> = {
-    PENDING_PAYMENT: "Aguardando pagamento",
-    PAID: "Pago",
-    PREPARING: "Em preparação",
-    SHIPPED: "Enviado",
-    DELIVERED: "Entregue",
-    CANCELED: "Cancelado",
-  };
-  return labels[status] ?? status;
-}
-
 function PedidoConfirmacaoPage() {
   const { orderId } = Route.useParams();
   const numericOrderId = Number(orderId);
   const [order, setOrder] = useState<OrderResponse | null>(() =>
     Number.isFinite(numericOrderId) ? getOrderConfirmation(numericOrderId) : null,
   );
-  const [loading, setLoading] = useState(!order);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -54,20 +36,22 @@ function PedidoConfirmacaoPage() {
       return;
     }
 
-    if (order) {
-      setLoading(false);
-      return;
-    }
-
+    setLoading(true);
     getOrderById(numericOrderId)
-      .then(setOrder)
+      .then((data) => {
+        setOrder(data);
+        saveOrderConfirmation(data);
+      })
       .catch((err) => {
-        const message =
-          err instanceof ApiError ? err.message : "Não foi possível carregar o pedido.";
-        setError(message);
+        if (!order) {
+          const message =
+            err instanceof ApiError ? err.message : "Não foi possível carregar o pedido.";
+          setError(message);
+        }
       })
       .finally(() => setLoading(false));
-  }, [numericOrderId, order]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh from API on mount/id change
+  }, [numericOrderId]);
 
   async function handleCopyOrderId() {
     if (!order) return;
@@ -76,7 +60,7 @@ function PedidoConfirmacaoPage() {
     window.setTimeout(() => setCopied(false), 2000);
   }
 
-  if (loading) {
+  if (loading && !order) {
     return (
       <div className="section-canvas flex min-h-[50vh] items-center justify-center py-16">
         <div className="flex flex-col items-center gap-3 text-[var(--color-muted)]">
@@ -87,7 +71,7 @@ function PedidoConfirmacaoPage() {
     );
   }
 
-  if (error || !order) {
+  if ((error && !order) || !order) {
     return (
       <div className="section-canvas min-h-[70vh]">
         <div className="container-page py-12 lg:py-16">
@@ -106,6 +90,18 @@ function PedidoConfirmacaoPage() {
   }
 
   const isPix = order.payment_method === "PIX";
+  const isRetirada = (order.shipping_method || "").toUpperCase() === "RETIRADA";
+  const timeline =
+    order.timeline && order.timeline.length > 0
+      ? order.timeline
+      : [
+          {
+            status: order.status,
+            label: customerStatusMessage(order.status),
+            message: customerStatusMessage(order.status),
+            created_at: order.data_pedido,
+          },
+        ];
 
   return (
     <div className="section-canvas min-h-[70vh]">
@@ -114,13 +110,14 @@ function PedidoConfirmacaoPage() {
           <div className="mb-10 text-center">
             <p className="eyebrow justify-center">
               <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-forest)]" />
-              Confirmação
+              Acompanhamento
             </p>
             <h1 className="editorial-title mt-3 text-3xl sm:text-4xl">
-              Pedido criado com <span className="editorial-serif">sucesso</span>
+              Pedido <span className="editorial-serif">#{order.id}</span>
             </h1>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
-              Seu pedido #{order.id} foi registrado em {formatOrderDate(order.data_pedido)}.
+              {customerStatusMessage(order.status)} Atualizado em{" "}
+              {formatOrderDateTime(order.updated_at || order.data_pedido)}.
             </p>
           </div>
 
@@ -131,23 +128,20 @@ function PedidoConfirmacaoPage() {
                   <p className="field-label mb-0">Número do pedido</p>
                   <p className="editorial-title text-2xl">#{order.id}</p>
                 </div>
-                <button type="button" onClick={handleCopyOrderId} className="btn-secondary">
-                  <Copy className="h-4 w-4" />
-                  {copied ? "Copiado!" : "Copiar número"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <OrderStatusBadge status={order.status} />
+                  <button type="button" onClick={handleCopyOrderId} className="btn-secondary">
+                    <Copy className="h-4 w-4" />
+                    {copied ? "Copiado!" : "Copiar número"}
+                  </button>
+                </div>
               </div>
 
               <dl className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm text-[var(--color-muted)]">Status</dt>
-                  <dd className="mt-1 text-sm font-semibold text-[var(--color-ink)]">
-                    {formatStatus(order.status)}
-                  </dd>
-                </div>
-                <div>
                   <dt className="text-sm text-[var(--color-muted)]">Pagamento</dt>
                   <dd className="mt-1 text-sm font-semibold text-[var(--color-ink)]">
-                    {order.payment_method === "PIX" ? "Pix" : order.payment_method}
+                    {formatPaymentMethod(order.payment_method)}
                   </dd>
                 </div>
                 <div>
@@ -165,7 +159,14 @@ function PedidoConfirmacaoPage() {
               </dl>
             </section>
 
-            {isPix && (
+            <section className="surface-card p-6">
+              <h2 className="editorial-title text-xl">Linha do tempo</h2>
+              <div className="mt-5">
+                <OrderStatusTimeline variant="customer" items={timeline} />
+              </div>
+            </section>
+
+            {isPix && order.status === "PENDING_PAYMENT" ? (
               <section className="overflow-hidden rounded-[4px] border border-[var(--color-forest)]/20 bg-[var(--color-cream)] p-6">
                 <p className="eyebrow">Pagamento</p>
                 <h2 className="editorial-title mt-2 text-xl">Instruções via Pix</h2>
@@ -177,18 +178,11 @@ function PedidoConfirmacaoPage() {
                   </li>
                   <li>Nossa equipe enviará a chave Pix e confirmará o valor total do pedido.</li>
                   <li>
-                    Após o pagamento, seu pedido será atualizado para o status{" "}
-                    <span className="font-semibold">Pago</span> e iniciaremos a preparação.
+                    Após o pagamento, seu pedido será atualizado e iniciaremos a preparação.
                   </li>
                 </ol>
-                <p className="mt-4 text-sm text-[var(--color-muted)]">
-                  Valor do pedido:{" "}
-                  <span className="font-semibold text-[var(--color-ink)]">
-                    {formatCurrency(Number(order.valor_total))}
-                  </span>
-                </p>
               </section>
-            )}
+            ) : null}
 
             <section className="surface-card p-6">
               <h2 className="editorial-title text-xl">Itens do pedido</h2>
@@ -216,7 +210,7 @@ function PedidoConfirmacaoPage() {
                         {item.nome_produto ?? `Produto #${item.product_id}`}
                       </p>
                       <p className="text-sm text-[var(--color-muted)]">
-                        {item.quantidade}x • Tam. {item.tamanho ?? "-"}
+                        {item.quantidade}x · Tam. {item.tamanho ?? "-"}
                       </p>
                       <p className="mt-1 text-sm font-semibold text-[var(--color-ink)]">
                         {formatCurrency(Number(item.subtotal))}
@@ -228,15 +222,24 @@ function PedidoConfirmacaoPage() {
             </section>
 
             <section className="surface-card p-6">
-              <h2 className="editorial-title text-xl">Entrega</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink)]">
-                {order.shipping_street}, {order.shipping_number}
-                {order.shipping_complement ? ` — ${order.shipping_complement}` : ""}
-                <br />
-                {order.shipping_neighborhood} — {order.shipping_city}/{order.shipping_state}
-                <br />
-                CEP {order.shipping_cep}
-              </p>
+              <h2 className="editorial-title text-xl">
+                {isRetirada ? "Retirada" : "Entrega"}
+              </h2>
+              {isRetirada ? (
+                <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink)]">
+                  Seu pedido será retirado/combinado com a loja. Aguarde o status “Pronto para
+                  retirada”.
+                </p>
+              ) : (
+                <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink)]">
+                  {order.shipping_street}, {order.shipping_number}
+                  {order.shipping_complement ? ` — ${order.shipping_complement}` : ""}
+                  <br />
+                  {order.shipping_neighborhood} — {order.shipping_city}/{order.shipping_state}
+                  <br />
+                  CEP {order.shipping_cep}
+                </p>
+              )}
             </section>
 
             <div className="flex flex-wrap gap-3">
@@ -244,7 +247,7 @@ function PedidoConfirmacaoPage() {
                 Continuar comprando
               </Link>
               <Link to="/acompanhar-pedido" className="btn-secondary">
-                Acompanhar pedido
+                Acompanhar pedidos
               </Link>
             </div>
           </div>

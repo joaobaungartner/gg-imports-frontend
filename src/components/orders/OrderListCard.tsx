@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import type { OrderListItem } from "@/lib/api";
+import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import {
   formatOrderDate,
-  formatOrderStatus,
   formatPaymentMethod,
   formatShippingMethod,
-  getOrderStatusColor,
 } from "@/lib/orderFormat";
 import { formatCurrency } from "@/lib/formatCurrency";
 
@@ -25,11 +24,7 @@ export function OrderListCard({ order }: OrderListCardProps) {
             </p>
           </div>
 
-          <span
-            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getOrderStatusColor(order.status)}`}
-          >
-            {formatOrderStatus(order.status)}
-          </span>
+          <OrderStatusBadge status={order.status} />
 
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <div>

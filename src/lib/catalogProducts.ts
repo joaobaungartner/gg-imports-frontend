@@ -34,6 +34,10 @@ function getGroupKey(product: ProductResponse): string {
   ].join("|");
 }
 
+export function getCatalogProductGroupKey(product: ProductResponse): string {
+  return getGroupKey(product);
+}
+
 function sortSizes(sizes: string[]): string[] {
   return [...sizes].sort((a, b) => {
     const indexA = SIZE_ORDER.indexOf(a as (typeof SIZE_ORDER)[number]);

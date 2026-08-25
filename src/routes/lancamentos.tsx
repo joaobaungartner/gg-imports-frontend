@@ -1,56 +1,31 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { createFileRoute } from "@tanstack/react-router";
+import { PublicProductShowcase } from "@/components/products/PublicProductShowcase";
 
 export const Route = createFileRoute("/lancamentos")({
   component: LancamentosPage,
 });
 
 function LancamentosPage() {
-  const items = products.filter((product) => product.isNew);
-
   return (
-    <div className="section-canvas min-h-[70vh]">
-      <div className="container-page py-12 lg:py-16">
-        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-xl">
-            <p className="eyebrow">
-              <span className="tag-lime">Novo</span>
-              Chegou agora
-            </p>
-            <h1 className="editorial-title mt-3 text-3xl sm:text-5xl">
-              Lançamentos da <span className="editorial-serif">temporada</span>
-            </h1>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
-              Os mantos mais recentes da curadoria GG — modelos novos para vestir o time com
-              identidade.
-            </p>
-          </div>
-          <Link to="/catalogo" className="btn-secondary shrink-0">
-            Ver catálogo completo
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="surface-card px-6 py-14 text-center">
-            <p className="editorial-title text-2xl">Nenhum lançamento no momento</p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
-              Em breve novos modelos. Enquanto isso, explore o catálogo completo.
-            </p>
-            <Link to="/catalogo" className="btn-primary mt-6 inline-flex">
-              Ir ao catálogo
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 lg:grid-cols-3">
-            {items.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    <PublicProductShowcase
+      config={{
+        collection: "launches",
+        eyebrow: (
+          <>
+            <span className="tag-lime">Novo</span>
+            Chegou agora
+          </>
+        ),
+        title: (
+          <>
+            Lançamentos da <span className="editorial-serif">temporada</span>
+          </>
+        ),
+        description:
+          "Os mantos mais recentes da curadoria GG — modelos escolhidos pela loja para vestir o time com identidade.",
+        emptyTitle: "Nenhum lançamento disponível no momento",
+        emptyMessage: "Nenhum lançamento disponível no momento. Novos mantos estão chegando.",
+      }}
+    />
   );
 }

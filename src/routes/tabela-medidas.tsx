@@ -94,7 +94,7 @@ function TabelaMedidasPage() {
 
           <p className="mt-6 text-sm text-[var(--color-muted)]">
             Player Version e modelos específicos podem cair um pouco mais justa. Em dúvida,{" "}
-            <Link to="/contato" className="btn-ghost inline !p-0 font-semibold">
+            <Link to="/" hash="contato" className="btn-ghost inline !p-0 font-semibold">
               fale conosco
             </Link>
             .

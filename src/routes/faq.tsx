@@ -79,7 +79,7 @@ function FaqPage() {
           </div>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link to="/contato" className="btn-primary">
+            <Link to="/" hash="contato" className="btn-primary">
               Falar conosco
             </Link>
             <Link to="/como-comprar" className="btn-secondary">

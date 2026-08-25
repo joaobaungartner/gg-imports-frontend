@@ -1,36 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, LogOut, Menu, ShoppingBag, X } from "lucide-react";
+import { LogIn, LogOut, Menu, MessageCircle, Phone, ShoppingBag, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import {
+  CONTACT_INFO,
+  FOOTER_AJUDA_LINKS,
+  FOOTER_INSTITUCIONAL_LINKS,
+  FOOTER_LOJA_LINKS,
+  getMainNavItems,
+  type NavItem,
+} from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-
-const NAV_LINKS = [
-  { label: "Catálogo", to: "/catalogo" },
-  { label: "Lançamentos", to: "/lancamentos" },
-  { label: "Promoções", to: "/promocoes" },
-  { label: "Acompanhe seu pedido", to: "/acompanhar-pedido" },
-  { label: "Como comprar", to: "/como-comprar" },
-  { label: "Contato", to: "/contato" },
-] as const;
-
-const FOOTER_LINKS = {
-  loja: [
-    { label: "Catálogo", to: "/catalogo" },
-    { label: "Lançamentos", to: "/lancamentos" },
-    { label: "Promoções", to: "/promocoes" },
-  ],
-  ajuda: [
-    { label: "Como comprar", to: "/como-comprar" },
-    { label: "Tabela de medidas", to: "/tabela-medidas" },
-    { label: "Rastrear pedido", to: "/acompanhar-pedido" },
-    { label: "FAQ", to: "/faq" },
-  ],
-  institucional: [
-    { label: "Sobre", to: "/sobre" },
-    { label: "Contato", to: "/contato" },
-  ],
-} as const;
 
 function BrandMark({ inverted = false }: { inverted?: boolean }) {
   return (
@@ -66,10 +47,40 @@ function BrandMark({ inverted = false }: { inverted?: boolean }) {
   );
 }
 
+function NavLinkItem({
+  item,
+  className,
+  onClick,
+}: {
+  item: NavItem;
+  className?: string;
+  onClick?: () => void;
+}) {
+  if (item.hash) {
+    return (
+      <a href={`${item.to}#${item.hash}`} className={className} onClick={onClick}>
+        {item.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      to={item.to}
+      className={className}
+      activeProps={{ className: "text-[var(--color-forest)]" }}
+      onClick={onClick}
+    >
+      {item.label}
+    </Link>
+  );
+}
+
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const { itemCount } = useCart();
+  const navItems = getMainNavItems(isAdmin);
 
   function handleLogout() {
     setMenuOpen(false);
@@ -88,15 +99,19 @@ function Header() {
           <BrandMark />
 
           <nav className="hidden items-center gap-5 xl:flex">
-            {NAV_LINKS.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-forest)]"
-                activeProps={{ className: "text-[var(--color-forest)]" }}
-              >
-                {item.label}
-              </Link>
+            {navItems.map((item) => (
+              <NavLinkItem
+                key={`${item.to}-${item.label}`}
+                item={item}
+                className={cn(
+                  "text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-forest)]",
+                  isAdmin &&
+                    (item.to.startsWith("/admin/pedidos") ||
+                      item.to.startsWith("/admin/cadastrar"))
+                    ? "font-semibold text-[var(--color-forest)]"
+                    : null,
+                )}
+              />
             ))}
           </nav>
 
@@ -109,7 +124,9 @@ function Header() {
                 style={{ borderRadius: 4 }}
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span className="max-w-28 truncate">{user?.nome?.split(" ")[0] ?? "Sair"}</span>
+                <span className="max-w-28 truncate">
+                  {isAdmin ? "Admin" : user?.nome?.split(" ")[0] ?? "Sair"}
+                </span>
               </button>
             ) : (
               <Link
@@ -149,20 +166,17 @@ function Header() {
         <div
           className={cn(
             "overflow-hidden border-t border-[var(--color-line)] bg-[var(--color-canvas)] transition-all xl:hidden",
-            menuOpen ? "max-h-[28rem] opacity-100" : "max-h-0 opacity-0",
+            menuOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0",
           )}
         >
           <nav className="container-page flex flex-col gap-0.5 py-4">
-            {NAV_LINKS.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
+            {navItems.map((item) => (
+              <NavLinkItem
+                key={`mobile-${item.to}-${item.label}`}
+                item={item}
                 className="px-3 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-cream)]"
-                style={{ borderRadius: 4 }}
                 onClick={() => setMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
+              />
             ))}
             {isAuthenticated ? (
               <button
@@ -198,16 +212,59 @@ function Footer() {
         <div className="sm:col-span-2 lg:col-span-1">
           <BrandMark inverted />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/55">
-            Camisas que carregam história, rivalidade e memória. Curadoria para quem vive o futebol.
+            Camisas que carregam história, rivalidade e memória. Curadoria para quem vive o
+            futebol.
           </p>
           <p className="font-serif mt-5 text-lg italic text-[var(--color-lime)]">
             Feito para quem vive o futebol
           </p>
         </div>
 
-        <FooterColumn title="Loja" links={FOOTER_LINKS.loja} />
-        <FooterColumn title="Ajuda" links={FOOTER_LINKS.ajuda} />
-        <FooterColumn title="Institucional" links={FOOTER_LINKS.institucional} />
+        <FooterColumn title="Loja" links={FOOTER_LOJA_LINKS} />
+        <FooterColumn title="Ajuda" links={FOOTER_AJUDA_LINKS} />
+        <FooterColumn title="Institucional" links={FOOTER_INSTITUCIONAL_LINKS} />
+      </div>
+
+      <div
+        id="contato"
+        className="scroll-mt-24 border-t border-white/10"
+      >
+        <div className="container-page grid gap-6 py-10 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-lime)]">
+              Contato
+            </p>
+            <p className="text-sm leading-relaxed text-white/65">
+              Tire dúvidas sobre pedidos, tamanhos e disponibilidade. Respondemos pelo WhatsApp
+              nos horários de atendimento.
+            </p>
+          </div>
+          <div className="space-y-3 text-sm">
+            <a
+              href={CONTACT_INFO.whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-white/75 transition-colors hover:text-white"
+            >
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp {CONTACT_INFO.phoneDisplay}
+            </a>
+            <a
+              href={CONTACT_INFO.phoneTel}
+              className="flex items-center gap-2 text-white/75 transition-colors hover:text-white"
+            >
+              <Phone className="h-4 w-4" />
+              {CONTACT_INFO.phoneDisplay}
+            </a>
+          </div>
+          <div className="text-sm text-white/65">
+            <p className="font-medium text-white/85">Retirada</p>
+            <p className="mt-1">{CONTACT_INFO.pickupNote}</p>
+            <p className="mt-3 text-white/55">
+              Para pedidos, informe o número e o e-mail ou CPF usados no checkout.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="border-t border-white/10">
@@ -224,7 +281,7 @@ function FooterColumn({
   links,
 }: {
   title: string;
-  links: readonly { label: string; to: string }[];
+  links: readonly NavItem[];
 }) {
   return (
     <div>
@@ -233,10 +290,19 @@ function FooterColumn({
       </p>
       <ul className="space-y-2 text-sm">
         {links.map((link) => (
-          <li key={link.to}>
-            <Link to={link.to} className="text-white/65 transition-colors hover:text-white">
-              {link.label}
-            </Link>
+          <li key={`${link.to}-${link.label}`}>
+            {link.hash ? (
+              <a
+                href={`${link.to}#${link.hash}`}
+                className="text-white/65 transition-colors hover:text-white"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link to={link.to} className="text-white/65 transition-colors hover:text-white">
+                {link.label}
+              </Link>
+            )}
           </li>
         ))}
       </ul>

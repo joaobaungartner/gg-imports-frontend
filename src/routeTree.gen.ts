@@ -26,7 +26,12 @@ import { Route as AcompanharPedidoRouteImport } from './routes/acompanhar-pedido
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
 import { Route as PedidoOrderIdRouteImport } from './routes/pedido.$orderId'
+import { Route as AdminPromocoesRouteImport } from './routes/admin/promocoes'
+import { Route as AdminPedidosRouteImport } from './routes/admin/pedidos'
+import { Route as AdminLancamentosRouteImport } from './routes/admin/lancamentos'
+import { Route as AdminComoComprarRouteImport } from './routes/admin/como-comprar'
 import { Route as AdminCadastrarProdutoRouteImport } from './routes/admin/cadastrar-produto'
+import { Route as AdminPedidosOrderIdRouteImport } from './routes/admin/pedidos.$orderId'
 
 const TabelaMedidasRoute = TabelaMedidasRouteImport.update({
   id: '/tabela-medidas',
@@ -113,10 +118,35 @@ const PedidoOrderIdRoute = PedidoOrderIdRouteImport.update({
   path: '/pedido/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPromocoesRoute = AdminPromocoesRouteImport.update({
+  id: '/admin/promocoes',
+  path: '/admin/promocoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPedidosRoute = AdminPedidosRouteImport.update({
+  id: '/admin/pedidos',
+  path: '/admin/pedidos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLancamentosRoute = AdminLancamentosRouteImport.update({
+  id: '/admin/lancamentos',
+  path: '/admin/lancamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminComoComprarRoute = AdminComoComprarRouteImport.update({
+  id: '/admin/como-comprar',
+  path: '/admin/como-comprar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCadastrarProdutoRoute = AdminCadastrarProdutoRouteImport.update({
   id: '/admin/cadastrar-produto',
   path: '/admin/cadastrar-produto',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPedidosOrderIdRoute = AdminPedidosOrderIdRouteImport.update({
+  id: '/$orderId',
+  path: '/$orderId',
+  getParentRoute: () => AdminPedidosRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -136,8 +166,13 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
+  '/admin/como-comprar': typeof AdminComoComprarRoute
+  '/admin/lancamentos': typeof AdminLancamentosRoute
+  '/admin/pedidos': typeof AdminPedidosRouteWithChildren
+  '/admin/promocoes': typeof AdminPromocoesRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
+  '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -156,8 +191,13 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
+  '/admin/como-comprar': typeof AdminComoComprarRoute
+  '/admin/lancamentos': typeof AdminLancamentosRoute
+  '/admin/pedidos': typeof AdminPedidosRouteWithChildren
+  '/admin/promocoes': typeof AdminPromocoesRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
+  '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,8 +217,13 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
+  '/admin/como-comprar': typeof AdminComoComprarRoute
+  '/admin/lancamentos': typeof AdminLancamentosRoute
+  '/admin/pedidos': typeof AdminPedidosRouteWithChildren
+  '/admin/promocoes': typeof AdminPromocoesRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
+  '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -199,8 +244,13 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/tabela-medidas'
     | '/admin/cadastrar-produto'
+    | '/admin/como-comprar'
+    | '/admin/lancamentos'
+    | '/admin/pedidos'
+    | '/admin/promocoes'
     | '/pedido/$orderId'
     | '/produto/$id'
+    | '/admin/pedidos/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -219,8 +269,13 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/tabela-medidas'
     | '/admin/cadastrar-produto'
+    | '/admin/como-comprar'
+    | '/admin/lancamentos'
+    | '/admin/pedidos'
+    | '/admin/promocoes'
     | '/pedido/$orderId'
     | '/produto/$id'
+    | '/admin/pedidos/$orderId'
   id:
     | '__root__'
     | '/'
@@ -239,8 +294,13 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/tabela-medidas'
     | '/admin/cadastrar-produto'
+    | '/admin/como-comprar'
+    | '/admin/lancamentos'
+    | '/admin/pedidos'
+    | '/admin/promocoes'
     | '/pedido/$orderId'
     | '/produto/$id'
+    | '/admin/pedidos/$orderId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -260,6 +320,10 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TabelaMedidasRoute: typeof TabelaMedidasRoute
   AdminCadastrarProdutoRoute: typeof AdminCadastrarProdutoRoute
+  AdminComoComprarRoute: typeof AdminComoComprarRoute
+  AdminLancamentosRoute: typeof AdminLancamentosRoute
+  AdminPedidosRoute: typeof AdminPedidosRouteWithChildren
+  AdminPromocoesRoute: typeof AdminPromocoesRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
 }
@@ -385,6 +449,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PedidoOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/promocoes': {
+      id: '/admin/promocoes'
+      path: '/admin/promocoes'
+      fullPath: '/admin/promocoes'
+      preLoaderRoute: typeof AdminPromocoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/pedidos': {
+      id: '/admin/pedidos'
+      path: '/admin/pedidos'
+      fullPath: '/admin/pedidos'
+      preLoaderRoute: typeof AdminPedidosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/lancamentos': {
+      id: '/admin/lancamentos'
+      path: '/admin/lancamentos'
+      fullPath: '/admin/lancamentos'
+      preLoaderRoute: typeof AdminLancamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/como-comprar': {
+      id: '/admin/como-comprar'
+      path: '/admin/como-comprar'
+      fullPath: '/admin/como-comprar'
+      preLoaderRoute: typeof AdminComoComprarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/cadastrar-produto': {
       id: '/admin/cadastrar-produto'
       path: '/admin/cadastrar-produto'
@@ -392,8 +484,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCadastrarProdutoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/pedidos/$orderId': {
+      id: '/admin/pedidos/$orderId'
+      path: '/$orderId'
+      fullPath: '/admin/pedidos/$orderId'
+      preLoaderRoute: typeof AdminPedidosOrderIdRouteImport
+      parentRoute: typeof AdminPedidosRoute
+    }
   }
 }
+
+interface AdminPedidosRouteChildren {
+  AdminPedidosOrderIdRoute: typeof AdminPedidosOrderIdRoute
+}
+
+const AdminPedidosRouteChildren: AdminPedidosRouteChildren = {
+  AdminPedidosOrderIdRoute: AdminPedidosOrderIdRoute,
+}
+
+const AdminPedidosRouteWithChildren = AdminPedidosRoute._addFileChildren(
+  AdminPedidosRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -412,6 +523,10 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TabelaMedidasRoute: TabelaMedidasRoute,
   AdminCadastrarProdutoRoute: AdminCadastrarProdutoRoute,
+  AdminComoComprarRoute: AdminComoComprarRoute,
+  AdminLancamentosRoute: AdminLancamentosRoute,
+  AdminPedidosRoute: AdminPedidosRouteWithChildren,
+  AdminPromocoesRoute: AdminPromocoesRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
 }

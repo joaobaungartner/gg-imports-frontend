@@ -164,10 +164,15 @@ function CatalogoPage() {
           </div>
 
           {isAdmin && (
-            <Link to="/admin/cadastrar-produto" className="btn-primary shrink-0">
-              <PackagePlus className="h-4 w-4" />
-              Cadastrar produto
-            </Link>
+            <>
+              <Link to="/admin/pedidos" className="btn-secondary shrink-0">
+                Pedidos
+              </Link>
+              <Link to="/admin/cadastrar-produto" className="btn-primary shrink-0">
+                <PackagePlus className="h-4 w-4" />
+                Cadastrar produto
+              </Link>
+            </>
           )}
         </div>
 
