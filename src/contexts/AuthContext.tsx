@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { LoginResponse } from "@/lib/api";
+import { invalidateApiCache, type LoginResponse } from "@/lib/api";
 import {
   clearAuth,
   getToken,
@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(
     (options?: LogoutOptions) => {
       clearAuth();
+      invalidateApiCache();
       setAuthState({ user: null, isAuthenticated: false });
 
       if (options?.sessionExpired) {
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const login = useCallback((response: LoginResponse) => {
+    invalidateApiCache();
     saveToken(response.access_token);
     saveUser(response.user);
     setAuthState({ user: response.user, isAuthenticated: true });

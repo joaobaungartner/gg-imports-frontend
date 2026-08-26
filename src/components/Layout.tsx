@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, LogOut, Menu, MessageCircle, Phone, ShoppingBag, X } from "lucide-react";
+import { LogIn, LogOut, Menu, MessageCircle, Phone, ShoppingBag, UserRound, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -117,16 +117,14 @@ function Header() {
 
           <div className="flex items-center gap-2 sm:gap-2.5">
             {isAuthenticated ? (
-              <Link
-                to={isAdmin ? "/admin/pedidos" : "/minha-conta"}
-                className="hidden items-center gap-1.5 border border-[var(--color-line)] px-3 py-2 text-[13px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] sm:inline-flex"
-                style={{ borderRadius: 4 }}
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                <span className="max-w-28 truncate">
-                  {isAdmin ? "Admin" : user?.nome?.split(" ")[0] ?? "Sair"}
-                </span>
-              </Link>
+              <>
+                <Link to={isAdmin ? "/admin/gestao" : "/minha-conta"} className="hidden items-center gap-1.5 border border-[var(--color-line)] px-3 py-2 text-[13px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-forest)] hover:text-[var(--color-forest)] sm:inline-flex" style={{ borderRadius: 4 }}>
+                  <UserRound className="h-3.5 w-3.5" />{isAdmin ? "Painel" : "Minha conta"}
+                </Link>
+                <button type="button" onClick={handleLogout} className="hidden items-center gap-1.5 border border-[var(--color-danger)] px-3 py-2 text-[13px] font-medium text-[var(--color-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_7%,white)] sm:inline-flex" style={{ borderRadius: 4 }} aria-label={`Sair da conta de ${user?.nome ?? "usuário"}`} title="Sair da conta">
+                  <LogOut className="h-3.5 w-3.5" /><span className="max-w-24 truncate">{isAdmin ? "Admin" : user?.nome?.split(" ")[0] ?? "Sair"}</span>
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
@@ -178,7 +176,7 @@ function Header() {
               />
             ))}
             {isAuthenticated ? (
-              <div className="mt-2 grid gap-2"><Link to={isAdmin ? "/admin/pedidos" : "/minha-conta"} className="btn-secondary" onClick={() => setMenuOpen(false)}>Minha conta</Link><button type="button" onClick={handleLogout} className="btn-ghost"><LogOut className="h-4 w-4" />Sair</button></div>
+              <div className="mt-2 grid gap-2"><Link to={isAdmin ? "/admin/gestao" : "/minha-conta"} className="btn-secondary" onClick={() => setMenuOpen(false)}><UserRound className="h-4 w-4" />{isAdmin ? "Painel administrativo" : "Minha conta"}</Link><button type="button" onClick={handleLogout} className="btn-ghost justify-center py-2.5 text-[var(--color-danger)]"><LogOut className="h-4 w-4" />Sair da conta</button></div>
             ) : (
               <Link
                 to="/login"

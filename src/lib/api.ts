@@ -6,6 +6,17 @@ type ApiErrorBody = {
   detail?: string | { msg: string }[];
 };
 
+const GET_CACHE_TTL_MS = 60_000;
+const getCache = new Map<string, { expiresAt: number; value: unknown }>();
+const inFlightGets = new Map<string, Promise<unknown>>();
+
+export function invalidateApiCache(pathPrefix?: string) {
+  for (const key of getCache.keys()) {
+    const path = key.slice(key.indexOf(":") + 1);
+    if (!pathPrefix || path.startsWith(pathPrefix)) getCache.delete(key);
+  }
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -50,6 +61,7 @@ export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const method = (options.method ?? "GET").toUpperCase();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> | undefined),
   };
@@ -63,18 +75,29 @@ export async function apiRequest<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${config.apiBaseUrl}${path}`, {
-    ...options,
-    headers,
-  });
-
-  await handleApiResponse(response, path);
-
-  if (response.status === 204) {
-    return undefined as T;
+  const cacheKey = `${token ?? "public"}:${path}`;
+  if (method === "GET") {
+    const cached = getCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value as T;
+    if (cached) getCache.delete(cacheKey);
+    const existing = inFlightGets.get(cacheKey);
+    if (existing) return existing as Promise<T>;
   }
 
-  return response.json() as Promise<T>;
+  const request = (async () => {
+    const response = await fetch(`${config.apiBaseUrl}${path}`, { ...options, headers });
+
+    await handleApiResponse(response, path);
+
+    if (response.status === 204) return undefined as T;
+    const data = await response.json() as T;
+    if (method === "GET") getCache.set(cacheKey, { value: data, expiresAt: Date.now() + GET_CACHE_TTL_MS });
+    return data;
+  })();
+
+  if (method === "GET") inFlightGets.set(cacheKey, request);
+  try { return await request; }
+  finally { if (method === "GET") inFlightGets.delete(cacheKey); }
 }
 
 export type LoginPayload = {
@@ -170,11 +193,11 @@ export function listAllCategories() {
 }
 
 export function createCategory(payload: { nome: string; descricao?: string }) {
-  return apiRequest<Category>("/categories/", { method: "POST", body: JSON.stringify(payload) });
+  return apiRequest<Category>("/categories/", { method: "POST", body: JSON.stringify(payload) }).then((result) => { invalidateApiCache("/categories/"); invalidateApiCache("/admin/management/audit"); invalidateApiCache("/admin/management/dashboard"); return result; });
 }
 
 export function updateCategory(id: number, payload: Partial<Category>) {
-  return apiRequest<Category>(`/categories/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  return apiRequest<Category>(`/categories/${id}`, { method: "PUT", body: JSON.stringify(payload) }).then((result) => { invalidateApiCache("/categories/"); invalidateApiCache("/admin/management/audit"); invalidateApiCache("/admin/management/dashboard"); return result; });
 }
 
 export function listProducts(
@@ -200,10 +223,10 @@ export function updateProduct(productId: number, payload: Partial<CreateProductP
 export type CouponAdmin = { id: number; codigo: string; desconto: string; validade: string; ativo: boolean };
 export function listCoupons() { return apiRequest<CouponAdmin[]>("/coupons/"); }
 export function createCoupon(payload: { codigo: string; desconto: number; validade: string; ativo?: boolean }) {
-  return apiRequest<CouponAdmin>("/coupons/", { method: "POST", body: JSON.stringify(payload) });
+  return apiRequest<CouponAdmin>("/coupons/", { method: "POST", body: JSON.stringify(payload) }).then((result) => { invalidateApiCache("/coupons/"); invalidateApiCache("/admin/management/audit"); invalidateApiCache("/admin/management/dashboard"); return result; });
 }
 export function updateCoupon(id: number, payload: Partial<{ codigo: string; desconto: number; validade: string; ativo: boolean }>) {
-  return apiRequest<CouponAdmin>(`/coupons/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  return apiRequest<CouponAdmin>(`/coupons/${id}`, { method: "PUT", body: JSON.stringify(payload) }).then((result) => { invalidateApiCache("/coupons/"); invalidateApiCache("/admin/management/audit"); invalidateApiCache("/admin/management/dashboard"); return result; });
 }
 
 export type SalesReport = { revenue: string; order_count: number; average_ticket: string; top_products: { product_id: number; name: string; quantity: number; revenue: string }[] };
@@ -211,18 +234,20 @@ export type LowStockItem = { id: number; name: string; sku: string | null; size:
 export type StockMovement = { id: number; product_id: number; product_name: string; type: string; quantity: number; previous_stock: number; new_stock: number; reason: string | null; created_at: string };
 export type AdminClient = { id: number; user_id: number; name: string; email: string; phone: string | null; cpf: string; active: boolean; email_verified: boolean; order_count: number; total_spent: string };
 export type AuditLog = { id: number; admin_name: string; action: string; resource_type: string; resource_id: string | null; details: Record<string, unknown> | null; created_at: string };
+export type AdminDashboard = { report: SalesReport; categories: Category[]; coupons: CouponAdmin[]; low_stock: LowStockItem[]; movements: StockMovement[]; clients: AdminClient[]; audit: AuditLog[] };
 
 export function getSalesReport() { return apiRequest<SalesReport>("/admin/management/reports/sales"); }
 export function getLowStock(threshold = 5) { return apiRequest<LowStockItem[]>(`/admin/management/stock/low?threshold=${threshold}`); }
 export function getStockMovements() { return apiRequest<StockMovement[]>("/admin/management/stock/movements"); }
 export function adjustStock(productId: number, quantity_delta: number, reason: string) {
-  return apiRequest(`/admin/management/stock/${productId}/adjust`, { method: "POST", body: JSON.stringify({ quantity_delta, reason }) });
+  return apiRequest(`/admin/management/stock/${productId}/adjust`, { method: "POST", body: JSON.stringify({ quantity_delta, reason }) }).then((result) => { invalidateApiCache("/admin/management/stock/"); invalidateApiCache("/admin/management/audit"); invalidateApiCache("/admin/management/dashboard"); return result; });
 }
 export function listAdminClients() { return apiRequest<AdminClient[]>("/admin/management/clients"); }
 export function updateAdminClientStatus(clientId: number, active: boolean) {
-  return apiRequest(`/admin/management/clients/${clientId}/status`, { method: "PATCH", body: JSON.stringify({ active }) });
+  return apiRequest(`/admin/management/clients/${clientId}/status`, { method: "PATCH", body: JSON.stringify({ active }) }).then((result) => { invalidateApiCache("/admin/management/clients"); invalidateApiCache("/admin/management/audit"); invalidateApiCache("/admin/management/dashboard"); return result; });
 }
 export function getAuditLog() { return apiRequest<AuditLog[]>("/admin/management/audit"); }
+export function getAdminDashboard() { return apiRequest<AdminDashboard>("/admin/management/dashboard"); }
 export async function downloadOrdersCsv() {
   const path = "/admin/management/orders/export.csv";
   const response = await fetch(`${config.apiBaseUrl}${path}`, { headers: { Authorization: `Bearer ${getToken() ?? ""}` } });
