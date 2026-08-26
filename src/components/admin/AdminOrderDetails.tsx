@@ -1,6 +1,6 @@
 import { Shirt } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { AdminOrderDetail } from "@/lib/api";
+import { updateOrderTracking, type AdminOrderDetail } from "@/lib/api";
 import { formatCurrency } from "@/lib/formatCurrency";
 import {
   formatOrderDateTime,
@@ -34,6 +34,9 @@ export function AdminOrderDetails({
   onSaveNotes,
 }: Props) {
   const [notes, setNotes] = useState(order.admin_notes ?? "");
+  const [trackingCode, setTrackingCode] = useState(order.codigo_rastreio ?? "");
+  const [trackingUrl, setTrackingUrl] = useState(order.url_rastreio ?? "");
+  const [savingTracking, setSavingTracking] = useState(false);
   const isRetirada = (order.shipping_method || "").toUpperCase() === "RETIRADA";
 
   useEffect(() => {
@@ -229,6 +232,13 @@ export function AdminOrderDetails({
             >
               {savingNotes ? "Salvando…" : "Salvar observações"}
             </button>
+            <div className="mt-6 border-t pt-5">
+              <label className="field-label" htmlFor="tracking-code">Código de rastreio</label>
+              <input id="tracking-code" className="field-input" value={trackingCode} onChange={e => setTrackingCode(e.target.value)} placeholder="Ex.: AA123456789BR" />
+              <label className="field-label mt-3" htmlFor="tracking-url">Link de rastreio</label>
+              <input id="tracking-url" className="field-input" value={trackingUrl} onChange={e => setTrackingUrl(e.target.value)} placeholder="https://..." />
+              <button type="button" className="btn-secondary mt-3" disabled={savingTracking || !trackingCode.trim()} onClick={async()=>{setSavingTracking(true); try { await updateOrderTracking(order.id, trackingCode.trim(), trackingUrl.trim() || undefined); } finally { setSavingTracking(false); }}}>{savingTracking ? "Salvando…" : "Salvar rastreamento"}</button>
+            </div>
           </div>
         </div>
       </section>

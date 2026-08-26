@@ -11,6 +11,7 @@ export function getMainNavItems(isAdmin: boolean): NavItem[] {
       { label: "Lançamentos", to: "/admin/lancamentos" },
       { label: "Promoções", to: "/admin/promocoes" },
       { label: "Pedidos", to: "/admin/pedidos" },
+      { label: "Gestão", to: "/admin/gestao" },
       { label: "Como comprar", to: "/admin/como-comprar" },
       { label: "Cadastrar produto", to: "/admin/cadastrar-produto" },
     ];

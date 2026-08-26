@@ -33,8 +33,10 @@ import { Route as PedidoOrderIdRouteImport } from './routes/pedido.$orderId'
 import { Route as AdminPromocoesRouteImport } from './routes/admin/promocoes'
 import { Route as AdminPedidosRouteImport } from './routes/admin/pedidos'
 import { Route as AdminLancamentosRouteImport } from './routes/admin/lancamentos'
+import { Route as AdminGestaoRouteImport } from './routes/admin/gestao'
 import { Route as AdminComoComprarRouteImport } from './routes/admin/como-comprar'
 import { Route as AdminCadastrarProdutoRouteImport } from './routes/admin/cadastrar-produto'
+import { Route as AdminProdutosProductIdRouteImport } from './routes/admin/produtos.$productId'
 import { Route as AdminPedidosOrderIdRouteImport } from './routes/admin/pedidos.$orderId'
 
 const VerificarEmailRoute = VerificarEmailRouteImport.update({
@@ -157,6 +159,11 @@ const AdminLancamentosRoute = AdminLancamentosRouteImport.update({
   path: '/admin/lancamentos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminGestaoRoute = AdminGestaoRouteImport.update({
+  id: '/admin/gestao',
+  path: '/admin/gestao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminComoComprarRoute = AdminComoComprarRouteImport.update({
   id: '/admin/como-comprar',
   path: '/admin/como-comprar',
@@ -165,6 +172,11 @@ const AdminComoComprarRoute = AdminComoComprarRouteImport.update({
 const AdminCadastrarProdutoRoute = AdminCadastrarProdutoRouteImport.update({
   id: '/admin/cadastrar-produto',
   path: '/admin/cadastrar-produto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProdutosProductIdRoute = AdminProdutosProductIdRouteImport.update({
+  id: '/admin/produtos/$productId',
+  path: '/admin/produtos/$productId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPedidosOrderIdRoute = AdminPedidosOrderIdRouteImport.update({
@@ -195,12 +207,14 @@ export interface FileRoutesByFullPath {
   '/verificar-email': typeof VerificarEmailRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
   '/admin/como-comprar': typeof AdminComoComprarRoute
+  '/admin/gestao': typeof AdminGestaoRoute
   '/admin/lancamentos': typeof AdminLancamentosRoute
   '/admin/pedidos': typeof AdminPedidosRouteWithChildren
   '/admin/promocoes': typeof AdminPromocoesRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
+  '/admin/produtos/$productId': typeof AdminProdutosProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -224,12 +238,14 @@ export interface FileRoutesByTo {
   '/verificar-email': typeof VerificarEmailRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
   '/admin/como-comprar': typeof AdminComoComprarRoute
+  '/admin/gestao': typeof AdminGestaoRoute
   '/admin/lancamentos': typeof AdminLancamentosRoute
   '/admin/pedidos': typeof AdminPedidosRouteWithChildren
   '/admin/promocoes': typeof AdminPromocoesRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
+  '/admin/produtos/$productId': typeof AdminProdutosProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -254,12 +270,14 @@ export interface FileRoutesById {
   '/verificar-email': typeof VerificarEmailRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
   '/admin/como-comprar': typeof AdminComoComprarRoute
+  '/admin/gestao': typeof AdminGestaoRoute
   '/admin/lancamentos': typeof AdminLancamentosRoute
   '/admin/pedidos': typeof AdminPedidosRouteWithChildren
   '/admin/promocoes': typeof AdminPromocoesRoute
   '/pedido/$orderId': typeof PedidoOrderIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
+  '/admin/produtos/$productId': typeof AdminProdutosProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -285,12 +303,14 @@ export interface FileRouteTypes {
     | '/verificar-email'
     | '/admin/cadastrar-produto'
     | '/admin/como-comprar'
+    | '/admin/gestao'
     | '/admin/lancamentos'
     | '/admin/pedidos'
     | '/admin/promocoes'
     | '/pedido/$orderId'
     | '/produto/$id'
     | '/admin/pedidos/$orderId'
+    | '/admin/produtos/$productId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -314,12 +334,14 @@ export interface FileRouteTypes {
     | '/verificar-email'
     | '/admin/cadastrar-produto'
     | '/admin/como-comprar'
+    | '/admin/gestao'
     | '/admin/lancamentos'
     | '/admin/pedidos'
     | '/admin/promocoes'
     | '/pedido/$orderId'
     | '/produto/$id'
     | '/admin/pedidos/$orderId'
+    | '/admin/produtos/$productId'
   id:
     | '__root__'
     | '/'
@@ -343,12 +365,14 @@ export interface FileRouteTypes {
     | '/verificar-email'
     | '/admin/cadastrar-produto'
     | '/admin/como-comprar'
+    | '/admin/gestao'
     | '/admin/lancamentos'
     | '/admin/pedidos'
     | '/admin/promocoes'
     | '/pedido/$orderId'
     | '/produto/$id'
     | '/admin/pedidos/$orderId'
+    | '/admin/produtos/$productId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -373,11 +397,13 @@ export interface RootRouteChildren {
   VerificarEmailRoute: typeof VerificarEmailRoute
   AdminCadastrarProdutoRoute: typeof AdminCadastrarProdutoRoute
   AdminComoComprarRoute: typeof AdminComoComprarRoute
+  AdminGestaoRoute: typeof AdminGestaoRoute
   AdminLancamentosRoute: typeof AdminLancamentosRoute
   AdminPedidosRoute: typeof AdminPedidosRouteWithChildren
   AdminPromocoesRoute: typeof AdminPromocoesRoute
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
+  AdminProdutosProductIdRoute: typeof AdminProdutosProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -550,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLancamentosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/gestao': {
+      id: '/admin/gestao'
+      path: '/admin/gestao'
+      fullPath: '/admin/gestao'
+      preLoaderRoute: typeof AdminGestaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/como-comprar': {
       id: '/admin/como-comprar'
       path: '/admin/como-comprar'
@@ -562,6 +595,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/cadastrar-produto'
       fullPath: '/admin/cadastrar-produto'
       preLoaderRoute: typeof AdminCadastrarProdutoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/produtos/$productId': {
+      id: '/admin/produtos/$productId'
+      path: '/admin/produtos/$productId'
+      fullPath: '/admin/produtos/$productId'
+      preLoaderRoute: typeof AdminProdutosProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/pedidos/$orderId': {
@@ -608,11 +648,13 @@ const rootRouteChildren: RootRouteChildren = {
   VerificarEmailRoute: VerificarEmailRoute,
   AdminCadastrarProdutoRoute: AdminCadastrarProdutoRoute,
   AdminComoComprarRoute: AdminComoComprarRoute,
+  AdminGestaoRoute: AdminGestaoRoute,
   AdminLancamentosRoute: AdminLancamentosRoute,
   AdminPedidosRoute: AdminPedidosRouteWithChildren,
   AdminPromocoesRoute: AdminPromocoesRoute,
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
+  AdminProdutosProductIdRoute: AdminProdutosProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

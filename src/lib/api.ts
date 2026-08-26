@@ -165,6 +165,18 @@ export function listCategories() {
   return apiRequest<Category[]>("/categories/?active=true");
 }
 
+export function listAllCategories() {
+  return apiRequest<Category[]>("/categories/");
+}
+
+export function createCategory(payload: { nome: string; descricao?: string }) {
+  return apiRequest<Category>("/categories/", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function updateCategory(id: number, payload: Partial<Category>) {
+  return apiRequest<Category>(`/categories/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
 export function listProducts(
   active = true,
   options?: { collection?: "promotions" | "launches" },
@@ -175,6 +187,51 @@ export function listProducts(
     params.set("collection", options.collection);
   }
   return apiRequest<ProductResponse[]>(`/products/?${params.toString()}`);
+}
+
+export function getProduct(productId: number) {
+  return apiRequest<ProductResponse>(`/products/${productId}`);
+}
+
+export function updateProduct(productId: number, payload: Partial<CreateProductPayload>) {
+  return apiRequest<ProductResponse>(`/products/${productId}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+export type CouponAdmin = { id: number; codigo: string; desconto: string; validade: string; ativo: boolean };
+export function listCoupons() { return apiRequest<CouponAdmin[]>("/coupons/"); }
+export function createCoupon(payload: { codigo: string; desconto: number; validade: string; ativo?: boolean }) {
+  return apiRequest<CouponAdmin>("/coupons/", { method: "POST", body: JSON.stringify(payload) });
+}
+export function updateCoupon(id: number, payload: Partial<{ codigo: string; desconto: number; validade: string; ativo: boolean }>) {
+  return apiRequest<CouponAdmin>(`/coupons/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+export type SalesReport = { revenue: string; order_count: number; average_ticket: string; top_products: { product_id: number; name: string; quantity: number; revenue: string }[] };
+export type LowStockItem = { id: number; name: string; sku: string | null; size: string; stock: number; image_url: string | null };
+export type StockMovement = { id: number; product_id: number; product_name: string; type: string; quantity: number; previous_stock: number; new_stock: number; reason: string | null; created_at: string };
+export type AdminClient = { id: number; user_id: number; name: string; email: string; phone: string | null; cpf: string; active: boolean; email_verified: boolean; order_count: number; total_spent: string };
+export type AuditLog = { id: number; admin_name: string; action: string; resource_type: string; resource_id: string | null; details: Record<string, unknown> | null; created_at: string };
+
+export function getSalesReport() { return apiRequest<SalesReport>("/admin/management/reports/sales"); }
+export function getLowStock(threshold = 5) { return apiRequest<LowStockItem[]>(`/admin/management/stock/low?threshold=${threshold}`); }
+export function getStockMovements() { return apiRequest<StockMovement[]>("/admin/management/stock/movements"); }
+export function adjustStock(productId: number, quantity_delta: number, reason: string) {
+  return apiRequest(`/admin/management/stock/${productId}/adjust`, { method: "POST", body: JSON.stringify({ quantity_delta, reason }) });
+}
+export function listAdminClients() { return apiRequest<AdminClient[]>("/admin/management/clients"); }
+export function updateAdminClientStatus(clientId: number, active: boolean) {
+  return apiRequest(`/admin/management/clients/${clientId}/status`, { method: "PATCH", body: JSON.stringify({ active }) });
+}
+export function getAuditLog() { return apiRequest<AuditLog[]>("/admin/management/audit"); }
+export async function downloadOrdersCsv() {
+  const path = "/admin/management/orders/export.csv";
+  const response = await fetch(`${config.apiBaseUrl}${path}`, { headers: { Authorization: `Bearer ${getToken() ?? ""}` } });
+  await handleApiResponse(response, path);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url; anchor.download = "pedidos.csv"; anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 export type ProductCollectionItem = {
@@ -633,6 +690,8 @@ export type AdminOrderDetail = {
   status: string;
   ativo: boolean;
   admin_notes: string | null;
+  codigo_rastreio: string | null;
+  url_rastreio: string | null;
   allowed_transitions: string[];
   itens: OrderItemResponse[];
   status_history: OrderStatusHistoryItem[];

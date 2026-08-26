@@ -371,6 +371,15 @@ export function ProductDetailsModal({
                   Desative tamanhos ou remova o produto do catálogo. Ações podem ser irreversíveis.
                 </p>
                 <div className="flex flex-col gap-2">
+                  {selectedVariant && (
+                    <Link
+                      to="/admin/produtos/$productId"
+                      params={{ productId: String(selectedVariant.id) }}
+                      className="btn-secondary text-center"
+                    >
+                      Editar produto completo
+                    </Link>
+                  )}
                   <button
                     type="button"
                     disabled={loadingAction !== null}
