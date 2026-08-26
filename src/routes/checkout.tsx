@@ -14,7 +14,7 @@ import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary
 import { CheckoutStepper, type CheckoutStepDefinition } from "@/components/checkout/CheckoutStepper";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { ApiError, createOrder, getAuthMe, quoteShipping } from "@/lib/api";
+import { ApiError, createOrder, getAuthMe, quoteShipping, validateCoupon } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { fetchAddressByCep } from "@/lib/cep";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -80,6 +80,10 @@ function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [cepError, setCepError] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponPercent, setCouponPercent] = useState(0);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [loadingCoupon, setLoadingCoupon] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -157,7 +161,32 @@ function CheckoutPage() {
     }
   }, [currentStep, refreshShippingQuote]);
 
-  const orderTotal = useMemo(() => cartTotal + shippingCost, [cartTotal, shippingCost]);
+  const couponDiscount = useMemo(
+    () => Math.round(cartTotal * couponPercent) / 100,
+    [cartTotal, couponPercent],
+  );
+  const orderTotal = useMemo(
+    () => Math.max(0, cartTotal - couponDiscount) + shippingCost,
+    [cartTotal, couponDiscount, shippingCost],
+  );
+
+  async function handleApplyCoupon() {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    setLoadingCoupon(true);
+    setCouponMessage("");
+    try {
+      const coupon = await validateCoupon(code);
+      setCouponCode(coupon.codigo);
+      setCouponPercent(Number(coupon.desconto));
+      setCouponMessage(`Cupom aplicado: ${coupon.desconto}% de desconto.`);
+    } catch (err) {
+      setCouponPercent(0);
+      setCouponMessage(err instanceof ApiError ? err.message : "Cupom inválido.");
+    } finally {
+      setLoadingCoupon(false);
+    }
+  }
 
   async function handleCepChange(value: string) {
     const formatted = formatCep(value);
@@ -264,6 +293,7 @@ function CheckoutPage() {
         shipping_method: shippingMethod,
         payment_method: paymentMethod,
         frete: shippingCost,
+        coupon_code: couponPercent > 0 ? couponCode : undefined,
         items: items.map((item) => ({
           product_id: item.productId,
           quantity: item.quantidade,
@@ -602,6 +632,22 @@ function CheckoutPage() {
                 </div>
               </dl>
             </div>
+
+            <div className="surface-card p-5 sm:p-6">
+              <h3 className="font-display text-base font-bold text-ink">Cupom de desconto</h3>
+              <div className="mt-4 flex gap-2">
+                <input
+                  value={couponCode}
+                  onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
+                  placeholder="DIGITE O CUPOM"
+                  className="field-input flex-1 uppercase"
+                />
+                <button type="button" onClick={handleApplyCoupon} disabled={loadingCoupon} className="btn-secondary">
+                  {loadingCoupon ? "Validando..." : "Aplicar"}
+                </button>
+              </div>
+              {couponMessage && <p className="mt-2 text-sm text-muted">{couponMessage}</p>}
+            </div>
           </section>
         );
 
@@ -691,6 +737,7 @@ function CheckoutPage() {
           shippingLabel={shippingLabel}
           loadingShipping={loadingShipping && currentStep >= 3}
           orderTotal={orderTotal}
+          couponDiscount={couponDiscount}
         />
       </div>
     </div>

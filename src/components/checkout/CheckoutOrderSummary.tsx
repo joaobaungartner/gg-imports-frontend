@@ -12,6 +12,7 @@ type CheckoutOrderSummaryProps = {
   shippingLabel: string;
   loadingShipping: boolean;
   orderTotal: number;
+  couponDiscount: number;
 };
 
 export function CheckoutOrderSummary({
@@ -23,6 +24,7 @@ export function CheckoutOrderSummary({
   shippingLabel,
   loadingShipping,
   orderTotal,
+  couponDiscount,
 }: CheckoutOrderSummaryProps) {
   return (
     <aside className="surface-card sticky top-24 h-fit p-6">
@@ -54,6 +56,12 @@ export function CheckoutOrderSummary({
           <dt>Itens</dt>
           <dd className="font-medium text-ink">{itemCount}</dd>
         </div>
+        {couponDiscount > 0 && (
+          <div className="flex items-center justify-between text-muted">
+            <dt>Cupom</dt>
+            <dd className="font-medium text-forest">-{formatCurrency(couponDiscount)}</dd>
+          </div>
+        )}
         <div className="flex items-center justify-between text-muted">
           <dt>Subtotal</dt>
           <dd className="font-medium text-ink">{formatCurrency(cartTotal)}</dd>

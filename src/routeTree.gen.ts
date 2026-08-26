@@ -9,13 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerificarEmailRouteImport } from './routes/verificar-email'
 import { Route as TabelaMedidasRouteImport } from './routes/tabela-medidas'
 import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as RastrearPedidoRouteImport } from './routes/rastrear-pedido'
 import { Route as PromocoesRouteImport } from './routes/promocoes'
+import { Route as MinhaContaRouteImport } from './routes/minha-conta'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LancamentosRouteImport } from './routes/lancamentos'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
 import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as ComoComprarRouteImport } from './routes/como-comprar'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -33,6 +37,11 @@ import { Route as AdminComoComprarRouteImport } from './routes/admin/como-compra
 import { Route as AdminCadastrarProdutoRouteImport } from './routes/admin/cadastrar-produto'
 import { Route as AdminPedidosOrderIdRouteImport } from './routes/admin/pedidos.$orderId'
 
+const VerificarEmailRoute = VerificarEmailRouteImport.update({
+  id: '/verificar-email',
+  path: '/verificar-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TabelaMedidasRoute = TabelaMedidasRouteImport.update({
   id: '/tabela-medidas',
   path: '/tabela-medidas',
@@ -43,6 +52,11 @@ const SobreRoute = SobreRouteImport.update({
   path: '/sobre',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RastrearPedidoRoute = RastrearPedidoRouteImport.update({
   id: '/rastrear-pedido',
   path: '/rastrear-pedido',
@@ -51,6 +65,11 @@ const RastrearPedidoRoute = RastrearPedidoRouteImport.update({
 const PromocoesRoute = PromocoesRouteImport.update({
   id: '/promocoes',
   path: '/promocoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MinhaContaRoute = MinhaContaRouteImport.update({
+  id: '/minha-conta',
+  path: '/minha-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -66,6 +85,11 @@ const LancamentosRoute = LancamentosRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EsqueciSenhaRoute = EsqueciSenhaRouteImport.update({
+  id: '/esqueci-senha',
+  path: '/esqueci-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContatoRoute = ContatoRouteImport.update({
@@ -158,13 +182,17 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/como-comprar': typeof ComoComprarRoute
   '/contato': typeof ContatoRoute
+  '/esqueci-senha': typeof EsqueciSenhaRoute
   '/faq': typeof FaqRoute
   '/lancamentos': typeof LancamentosRoute
   '/login': typeof LoginRoute
+  '/minha-conta': typeof MinhaContaRoute
   '/promocoes': typeof PromocoesRoute
   '/rastrear-pedido': typeof RastrearPedidoRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
+  '/verificar-email': typeof VerificarEmailRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
   '/admin/como-comprar': typeof AdminComoComprarRoute
   '/admin/lancamentos': typeof AdminLancamentosRoute
@@ -183,13 +211,17 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/como-comprar': typeof ComoComprarRoute
   '/contato': typeof ContatoRoute
+  '/esqueci-senha': typeof EsqueciSenhaRoute
   '/faq': typeof FaqRoute
   '/lancamentos': typeof LancamentosRoute
   '/login': typeof LoginRoute
+  '/minha-conta': typeof MinhaContaRoute
   '/promocoes': typeof PromocoesRoute
   '/rastrear-pedido': typeof RastrearPedidoRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
+  '/verificar-email': typeof VerificarEmailRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
   '/admin/como-comprar': typeof AdminComoComprarRoute
   '/admin/lancamentos': typeof AdminLancamentosRoute
@@ -209,13 +241,17 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/como-comprar': typeof ComoComprarRoute
   '/contato': typeof ContatoRoute
+  '/esqueci-senha': typeof EsqueciSenhaRoute
   '/faq': typeof FaqRoute
   '/lancamentos': typeof LancamentosRoute
   '/login': typeof LoginRoute
+  '/minha-conta': typeof MinhaContaRoute
   '/promocoes': typeof PromocoesRoute
   '/rastrear-pedido': typeof RastrearPedidoRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sobre': typeof SobreRoute
   '/tabela-medidas': typeof TabelaMedidasRoute
+  '/verificar-email': typeof VerificarEmailRoute
   '/admin/cadastrar-produto': typeof AdminCadastrarProdutoRoute
   '/admin/como-comprar': typeof AdminComoComprarRoute
   '/admin/lancamentos': typeof AdminLancamentosRoute
@@ -236,13 +272,17 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/como-comprar'
     | '/contato'
+    | '/esqueci-senha'
     | '/faq'
     | '/lancamentos'
     | '/login'
+    | '/minha-conta'
     | '/promocoes'
     | '/rastrear-pedido'
+    | '/redefinir-senha'
     | '/sobre'
     | '/tabela-medidas'
+    | '/verificar-email'
     | '/admin/cadastrar-produto'
     | '/admin/como-comprar'
     | '/admin/lancamentos'
@@ -261,13 +301,17 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/como-comprar'
     | '/contato'
+    | '/esqueci-senha'
     | '/faq'
     | '/lancamentos'
     | '/login'
+    | '/minha-conta'
     | '/promocoes'
     | '/rastrear-pedido'
+    | '/redefinir-senha'
     | '/sobre'
     | '/tabela-medidas'
+    | '/verificar-email'
     | '/admin/cadastrar-produto'
     | '/admin/como-comprar'
     | '/admin/lancamentos'
@@ -286,13 +330,17 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/como-comprar'
     | '/contato'
+    | '/esqueci-senha'
     | '/faq'
     | '/lancamentos'
     | '/login'
+    | '/minha-conta'
     | '/promocoes'
     | '/rastrear-pedido'
+    | '/redefinir-senha'
     | '/sobre'
     | '/tabela-medidas'
+    | '/verificar-email'
     | '/admin/cadastrar-produto'
     | '/admin/como-comprar'
     | '/admin/lancamentos'
@@ -312,13 +360,17 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   ComoComprarRoute: typeof ComoComprarRoute
   ContatoRoute: typeof ContatoRoute
+  EsqueciSenhaRoute: typeof EsqueciSenhaRoute
   FaqRoute: typeof FaqRoute
   LancamentosRoute: typeof LancamentosRoute
   LoginRoute: typeof LoginRoute
+  MinhaContaRoute: typeof MinhaContaRoute
   PromocoesRoute: typeof PromocoesRoute
   RastrearPedidoRoute: typeof RastrearPedidoRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SobreRoute: typeof SobreRoute
   TabelaMedidasRoute: typeof TabelaMedidasRoute
+  VerificarEmailRoute: typeof VerificarEmailRoute
   AdminCadastrarProdutoRoute: typeof AdminCadastrarProdutoRoute
   AdminComoComprarRoute: typeof AdminComoComprarRoute
   AdminLancamentosRoute: typeof AdminLancamentosRoute
@@ -330,6 +382,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verificar-email': {
+      id: '/verificar-email'
+      path: '/verificar-email'
+      fullPath: '/verificar-email'
+      preLoaderRoute: typeof VerificarEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tabela-medidas': {
       id: '/tabela-medidas'
       path: '/tabela-medidas'
@@ -344,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SobreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rastrear-pedido': {
       id: '/rastrear-pedido'
       path: '/rastrear-pedido'
@@ -356,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/promocoes'
       fullPath: '/promocoes'
       preLoaderRoute: typeof PromocoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/minha-conta': {
+      id: '/minha-conta'
+      path: '/minha-conta'
+      fullPath: '/minha-conta'
+      preLoaderRoute: typeof MinhaContaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -377,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/esqueci-senha': {
+      id: '/esqueci-senha'
+      path: '/esqueci-senha'
+      fullPath: '/esqueci-senha'
+      preLoaderRoute: typeof EsqueciSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contato': {
@@ -515,13 +595,17 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   ComoComprarRoute: ComoComprarRoute,
   ContatoRoute: ContatoRoute,
+  EsqueciSenhaRoute: EsqueciSenhaRoute,
   FaqRoute: FaqRoute,
   LancamentosRoute: LancamentosRoute,
   LoginRoute: LoginRoute,
+  MinhaContaRoute: MinhaContaRoute,
   PromocoesRoute: PromocoesRoute,
   RastrearPedidoRoute: RastrearPedidoRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
   SobreRoute: SobreRoute,
   TabelaMedidasRoute: TabelaMedidasRoute,
+  VerificarEmailRoute: VerificarEmailRoute,
   AdminCadastrarProdutoRoute: AdminCadastrarProdutoRoute,
   AdminComoComprarRoute: AdminComoComprarRoute,
   AdminLancamentosRoute: AdminLancamentosRoute,

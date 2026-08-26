@@ -117,17 +117,16 @@ function Header() {
 
           <div className="flex items-center gap-2 sm:gap-2.5">
             {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handleLogout}
+              <Link
+                to={isAdmin ? "/admin/pedidos" : "/minha-conta"}
                 className="hidden items-center gap-1.5 border border-[var(--color-line)] px-3 py-2 text-[13px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] sm:inline-flex"
                 style={{ borderRadius: 4 }}
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogIn className="h-3.5 w-3.5" />
                 <span className="max-w-28 truncate">
                   {isAdmin ? "Admin" : user?.nome?.split(" ")[0] ?? "Sair"}
                 </span>
-              </button>
+              </Link>
             ) : (
               <Link
                 to="/login"
@@ -179,15 +178,7 @@ function Header() {
               />
             ))}
             {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="mt-2 flex w-full items-center gap-2 border border-[var(--color-line)] px-3 py-2.5 text-sm font-semibold text-[var(--color-ink)]"
-                style={{ borderRadius: 4 }}
-              >
-                <LogOut className="h-4 w-4" />
-                Sair
-              </button>
+              <div className="mt-2 grid gap-2"><Link to={isAdmin ? "/admin/pedidos" : "/minha-conta"} className="btn-secondary" onClick={() => setMenuOpen(false)}>Minha conta</Link><button type="button" onClick={handleLogout} className="btn-ghost"><LogOut className="h-4 w-4" />Sair</button></div>
             ) : (
               <Link
                 to="/login"

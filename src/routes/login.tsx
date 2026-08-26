@@ -115,6 +115,7 @@ function LoginPage() {
                 <label htmlFor="senha" className="field-label">
                   Senha
                 </label>
+                <Link to="/esqueci-senha" className="text-sm font-semibold text-forest hover:underline">Esqueci minha senha</Link>
                 <input
                   id="senha"
                   type="password"

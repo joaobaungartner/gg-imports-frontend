@@ -3,7 +3,7 @@ import { CheckCircle2, Copy, Loader2, Shirt } from "lucide-react";
 import { useEffect, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
-import { ApiError, getOrderById, type OrderResponse } from "@/lib/api";
+import { ApiError, cancelOrder, createPostSaleRequest, getOrderById, type OrderResponse } from "@/lib/api";
 import { formatCurrency } from "@/lib/formatCurrency";
 import {
   customerStatusMessage,
@@ -58,6 +58,19 @@ function PedidoConfirmacaoPage() {
     await navigator.clipboard.writeText(String(order.id));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleCancel() {
+    if (!order || !window.confirm("Cancelar este pedido?")) return;
+    setOrder(await cancelOrder(order.id));
+  }
+
+  async function handlePostSale(requestType: "RETURN" | "EXCHANGE" | "REFUND") {
+    if (!order) return;
+    const reason = window.prompt("Descreva o motivo da solicitação:");
+    if (!reason) return;
+    await createPostSaleRequest({ order_id: order.id, request_type: requestType, reason });
+    window.alert("Solicitação enviada para análise.");
   }
 
   if (loading && !order) {
@@ -159,6 +172,8 @@ function PedidoConfirmacaoPage() {
               </dl>
             </section>
 
+            {order.codigo_rastreio && <section className="surface-card p-6"><h2 className="editorial-title text-xl">Rastreamento</h2><p className="mt-3 font-semibold">{order.codigo_rastreio}</p>{order.url_rastreio && <a className="btn-secondary mt-4 inline-flex" href={order.url_rastreio} target="_blank" rel="noreferrer">Rastrear entrega</a>}</section>}
+
             <section className="surface-card p-6">
               <h2 className="editorial-title text-xl">Linha do tempo</h2>
               <div className="mt-5">
@@ -249,6 +264,8 @@ function PedidoConfirmacaoPage() {
               <Link to="/acompanhar-pedido" className="btn-secondary">
                 Acompanhar pedidos
               </Link>
+              {order.status === "PENDING_PAYMENT" && <button type="button" onClick={handleCancel} className="btn-ghost">Cancelar pedido</button>}
+              {order.status === "DELIVERED" && <><button type="button" onClick={() => void handlePostSale("EXCHANGE")} className="btn-ghost">Solicitar troca</button><button type="button" onClick={() => void handlePostSale("RETURN")} className="btn-ghost">Solicitar devolução</button><button type="button" onClick={() => void handlePostSale("REFUND")} className="btn-ghost">Solicitar reembolso</button></>}
             </div>
           </div>
         </div>

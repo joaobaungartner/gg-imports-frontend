@@ -16,7 +16,10 @@ import {
   removeCartItem,
   updateCartQuantity,
   type CartItem,
+  replaceCartStorage,
 } from "@/lib/cart";
+import { getMyCart, listProducts, syncMyCart } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 type AddToCartInput = Omit<CartItem, "quantidade"> & { quantidade: number };
 
@@ -35,6 +38,7 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [items, setItems] = useState<CartItem[]>(() => getCartItems());
   const [itemCount, setItemCount] = useState(() => getCartItemsCount());
 
@@ -79,6 +83,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refreshCart();
   }, [refreshCart]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    async function hydrateAndMergeCart() {
+      try {
+        const localItems = getCartItems();
+        if (localItems.length > 0) {
+          await syncMyCart(localItems.map((item) => ({ product_id: item.productId, quantidade: item.quantidade })));
+        }
+        const [serverCart, products] = await Promise.all([getMyCart(), listProducts(true)]);
+        const productsById = new Map(products.map((product) => [product.id, product]));
+        const merged = serverCart.itens.flatMap((item) => {
+          const product = productsById.get(item.product_id);
+          return product ? [{ productId: product.id, nome: product.nome, clube: product.clube, tipo: product.tipo, tamanho: product.tamanho, preco: Number(product.preco), quantidade: item.quantidade, imagem_url: product.imagem_url, estoque: product.estoque }] : [];
+        });
+        if (!cancelled) syncState(replaceCartStorage(merged));
+      } catch {
+        // Mantém o carrinho local se a API estiver indisponível.
+      }
+    }
+    void hydrateAndMergeCart();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, syncState]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void syncMyCart(items.map((item) => ({ product_id: item.productId, quantidade: item.quantidade }))).catch(() => undefined);
+  }, [isAuthenticated, items]);
 
   const cartTotal = useMemo(() => getCartTotal(items), [items]);
 

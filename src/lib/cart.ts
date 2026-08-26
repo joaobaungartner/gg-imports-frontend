@@ -28,6 +28,11 @@ function writeCart(items: CartItem[]) {
   localStorage.setItem(CART_KEY, JSON.stringify(items));
 }
 
+export function replaceCartStorage(items: CartItem[]): CartItem[] {
+  writeCart(items);
+  return items;
+}
+
 function findItemIndex(items: CartItem[], productId: number, tamanho: string): number {
   return items.findIndex(
     (item) => item.productId === productId && item.tamanho === tamanho,

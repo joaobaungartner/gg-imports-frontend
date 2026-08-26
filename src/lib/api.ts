@@ -131,6 +131,11 @@ export type CreateProductPayload = {
   tamanho: string;
   clube: string;
   tipo: string;
+  temporada?: string;
+  versao?: string;
+  genero?: string;
+  fornecedor?: string;
+  sku?: string;
   estoque: number;
   imagem_url?: string;
   imagem?: File;
@@ -146,6 +151,11 @@ export type ProductResponse = {
   tamanho: string;
   clube: string;
   tipo: string;
+  temporada?: string | null;
+  versao?: string | null;
+  genero?: string | null;
+  fornecedor?: string | null;
+  sku?: string | null;
   estoque: number;
   imagem_url: string | null;
   ativo: boolean;
@@ -259,6 +269,11 @@ export function createProduct(payload: CreateProductPayload) {
   formData.append("tamanho", payload.tamanho);
   formData.append("clube", payload.clube);
   formData.append("tipo", payload.tipo);
+  if (payload.temporada) formData.append("temporada", payload.temporada);
+  if (payload.versao) formData.append("versao", payload.versao);
+  if (payload.genero) formData.append("genero", payload.genero);
+  if (payload.fornecedor) formData.append("fornecedor", payload.fornecedor);
+  if (payload.sku) formData.append("sku", payload.sku);
   formData.append("estoque", String(payload.estoque));
   formData.append("ativo", String(payload.ativo ?? true));
 
@@ -312,14 +327,61 @@ export type AuthMeResponse = {
   client_id: number | null;
   cpf: string | null;
   endereco: AuthMeAddress | null;
+  email_verificado?: boolean;
 };
 
 export function getAuthMe() {
   return apiRequest<AuthMeResponse>("/auth/me");
 }
 
+export type ServerCart = {
+  id: number;
+  client_id: number;
+  itens: Array<{ id: number; product_id: number; quantidade: number; preco_unitario: string }>;
+  valor_total: string;
+};
+
+export function getMyCart() {
+  return apiRequest<ServerCart>("/carts/me/current");
+}
+
+export function syncMyCart(items: Array<{ product_id: number; quantidade: number }>) {
+  return apiRequest<ServerCart>("/carts/me/current", {
+    method: "PUT",
+    body: JSON.stringify({ items }),
+  });
+}
+
+export function requestPasswordReset(email: string) {
+  return apiRequest<{ message: string }>("/auth/password/forgot", { method: "POST", body: JSON.stringify({ email }) });
+}
+
+export function resetPassword(token: string, nova_senha: string) {
+  return apiRequest<{ message: string }>("/auth/password/reset", { method: "POST", body: JSON.stringify({ token, nova_senha }) });
+}
+
+export function changePassword(senha_atual: string, nova_senha: string) {
+  return apiRequest<{ message: string }>("/auth/password/change", { method: "POST", body: JSON.stringify({ senha_atual, nova_senha }) });
+}
+
+export function requestEmailVerification() {
+  return apiRequest<{ message: string }>("/auth/email/request-verification", { method: "POST" });
+}
+
+export function verifyEmail(token: string) {
+  return apiRequest<{ message: string }>("/auth/email/verify", { method: "POST", body: JSON.stringify({ token }) });
+}
+
 export function getClientByUserId(userId: number) {
   return apiRequest<ClientProfile>(`/clients/user/${userId}`);
+}
+
+export function updateUser(userId: number, payload: { nome?: string; telefone?: string }) {
+  return apiRequest(`/users/${userId}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+export function createAddress(payload: { client_id: number; rua: string; numero: string; bairro: string; cidade: string; estado: string; cep: string }) {
+  return apiRequest("/addresses/", { method: "POST", body: JSON.stringify(payload) });
 }
 
 export type ShippingQuotePayload = {
@@ -365,8 +427,24 @@ export type CreateOrderPayload = {
   shipping_method: string;
   payment_method: string;
   frete: number;
+  coupon_code?: string;
   items: CreateOrderItemPayload[];
 };
+
+export type CouponResponse = {
+  id: number;
+  codigo: string;
+  desconto: string;
+  validade: string;
+  ativo: boolean;
+};
+
+export function validateCoupon(codigo: string) {
+  return apiRequest<CouponResponse>("/coupons/validate", {
+    method: "POST",
+    body: JSON.stringify({ codigo }),
+  });
+}
 
 export type OrderItemResponse = {
   id: number;
@@ -413,7 +491,21 @@ export type OrderResponse = {
   ativo: boolean;
   itens: OrderItemResponse[];
   timeline?: OrderTimelineItem[];
+  codigo_rastreio?: string | null;
+  url_rastreio?: string | null;
 };
+
+export function cancelOrder(orderId: number) {
+  return apiRequest<OrderResponse>(`/orders/${orderId}/cancel`, { method: "PATCH" });
+}
+
+export function createPostSaleRequest(payload: { order_id: number; request_type: "RETURN" | "EXCHANGE" | "REFUND"; reason: string }) {
+  return apiRequest("/post-sales/", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function updateOrderTracking(orderId: number, codigo_rastreio: string, url_rastreio?: string) {
+  return apiRequest<AdminOrderDetail>(`/admin/orders/${orderId}/tracking`, { method: "PATCH", body: JSON.stringify({ codigo_rastreio, url_rastreio }) });
+}
 
 export function createOrder(payload: CreateOrderPayload) {
   return apiRequest<OrderResponse>("/orders/", {
