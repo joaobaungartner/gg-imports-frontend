@@ -10,11 +10,13 @@ import {
   User,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
+import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
 import { CheckoutStepper, type CheckoutStepDefinition } from "@/components/checkout/CheckoutStepper";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { ApiError, createOrder, getAuthMe, quoteShipping, validateCoupon } from "@/lib/api";
+import { ApiError, createOrder, createPayment, processPayment, getAuthMe, getOrderById, quoteShipping, validateCoupon, type CardPaymentData } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { fetchAddressByCep } from "@/lib/cep";
 import { formatCurrency } from "@/lib/formatCurrency";
@@ -50,6 +52,9 @@ const CHECKOUT_STEPS: CheckoutStepDefinition[] = [
 type ShippingMethod = "ENTREGA" | "RETIRADA";
 type PaymentMethod = "PIX" | "CARTAO";
 
+const mercadoPagoPublicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY as string | undefined;
+if (mercadoPagoPublicKey) initMercadoPago(mercadoPagoPublicKey, { locale: "pt-BR" });
+
 const selectableCardClass =
   "flex cursor-pointer items-start gap-3 rounded border border-line p-4 transition-colors has-checked:border-forest has-checked:bg-[color-mix(in_srgb,var(--color-lime)_18%,white)]";
 
@@ -84,6 +89,8 @@ function CheckoutPage() {
   const [couponPercent, setCouponPercent] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
   const [loadingCoupon, setLoadingCoupon] = useState(false);
+  const pendingOrderId = useRef<number | null>(null);
+  const pendingPaymentId = useRef<number | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -266,7 +273,7 @@ function CheckoutPage() {
     setCurrentStep((step) => Math.max(step - 1, 1));
   }
 
-  async function handleCreateOrder() {
+  async function handleCreateOrder(cardData?: CardPaymentData) {
     setError("");
     const validationError = validateStep(5);
     if (validationError) {
@@ -276,7 +283,9 @@ function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const order = await createOrder({
+      const order = pendingOrderId.current
+        ? await getOrderById(pendingOrderId.current)
+        : await createOrder({
         customer_name: customerName.trim(),
         customer_email: customerEmail.trim(),
         customer_phone: onlyDigits(customerPhone),
@@ -298,15 +307,26 @@ function CheckoutPage() {
           product_id: item.productId,
           quantity: item.quantidade,
         })),
-      });
+          });
+
+      pendingOrderId.current = order.id;
+      const payment = pendingPaymentId.current
+        ? { id: pendingPaymentId.current }
+        : await createPayment(order.id, paymentMethod === "PIX" ? "PIX" : "CREDIT_CARD");
+      pendingPaymentId.current = payment.id;
+      const processed = await processPayment(payment.id, cardData);
+      if (processed.status === "FAILED") {
+        throw new Error("Pagamento recusado. Confira os dados ou tente outro cartão.");
+      }
 
       saveOrderConfirmation(order);
       clearCart();
       await navigate({ to: "/pedido/$orderId", params: { orderId: String(order.id) } });
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Não foi possível criar o pedido.";
+        err instanceof ApiError || err instanceof Error ? err.message : "Não foi possível criar o pedido.";
       setError(message);
+      if (cardData) throw err;
     } finally {
       setSubmitting(false);
     }
@@ -561,11 +581,11 @@ function CheckoutPage() {
                 </span>
               </label>
 
-              <label className="flex cursor-not-allowed items-start gap-3 rounded border border-line bg-cream/50 p-4 opacity-60">
-                <input type="radio" name="paymentMethod" value="CARTAO" disabled className="mt-1" />
+              <label className={selectableCardClass}>
+                <input type="radio" name="paymentMethod" value="CARTAO" checked={paymentMethod === "CARTAO"} onChange={() => setPaymentMethod("CARTAO")} className="mt-1 accent-forest" />
                 <span>
                   <span className="block text-sm font-semibold text-ink">Cartão de crédito</span>
-                  <span className="mt-1 block text-sm text-muted">Em breve</span>
+                  <span className="mt-1 block text-sm text-muted">Pagamento seguro processado pelo Mercado Pago.</span>
                 </span>
               </label>
             </div>
@@ -628,7 +648,7 @@ function CheckoutPage() {
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted">Pagamento</dt>
-                  <dd className="text-right font-medium text-ink">Pix</dd>
+                  <dd className="text-right font-medium text-ink">{paymentMethod === "PIX" ? "Pix" : "Cartão de crédito"}</dd>
                 </div>
               </dl>
             </div>
@@ -648,6 +668,34 @@ function CheckoutPage() {
               </div>
               {couponMessage && <p className="mt-2 text-sm text-muted">{couponMessage}</p>}
             </div>
+
+            {paymentMethod === "CARTAO" && (
+              <div className="surface-card p-5 sm:p-6">
+                <h3 className="font-display text-base font-bold text-ink">Dados do cartão</h3>
+                {!mercadoPagoPublicKey ? (
+                  <div className="alert-error mt-4">Configure VITE_MERCADO_PAGO_PUBLIC_KEY para habilitar o cartão.</div>
+                ) : (
+                  <div className="mt-4">
+                    <CardPayment
+                      initialization={{ amount: orderTotal, payer: { email: customerEmail, identification: customerCpf ? { type: "CPF", number: onlyDigits(customerCpf) } : undefined } }}
+                      customization={{ paymentMethods: { types: { included: ["credit_card"] } } }}
+                      onSubmit={async (formData) => {
+                        await handleCreateOrder({
+                          token: formData.token,
+                          payment_method_id: formData.payment_method_id,
+                          issuer_id: formData.issuer_id,
+                          installments: formData.installments,
+                          payer_email: formData.payer.email,
+                          identification_type: formData.payer.identification?.type,
+                          identification_number: formData.payer.identification?.number,
+                        });
+                      }}
+                      onError={() => setError("Não foi possível carregar o formulário seguro do cartão.")}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         );
 
@@ -695,10 +743,10 @@ function CheckoutPage() {
               <span className="hidden sm:block" />
             )}
 
-            {isLastStep ? (
+            {isLastStep && paymentMethod === "PIX" ? (
               <button
                 type="button"
-                onClick={handleCreateOrder}
+                onClick={() => void handleCreateOrder()}
                 disabled={submitting || loadingProfile || loadingShipping}
                 className="btn-primary sm:ml-auto"
               >
@@ -714,7 +762,7 @@ function CheckoutPage() {
                   </>
                 )}
               </button>
-            ) : (
+            ) : !isLastStep ? (
               <button
                 type="button"
                 onClick={goToNextStep}
@@ -724,7 +772,7 @@ function CheckoutPage() {
                 Continuar
                 <ArrowRight className="h-4 w-4" />
               </button>
-            )}
+            ) : null}
           </div>
         </div>
 

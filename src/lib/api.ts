@@ -596,6 +596,55 @@ export function createOrder(payload: CreateOrderPayload) {
   });
 }
 
+export type PaymentResponse = {
+  id: number;
+  order_id: number;
+  metodo: string;
+  status: string;
+  valor: string;
+  codigo_transacao: string | null;
+  data_pagamento: string | null;
+  ativo: boolean;
+  gateway: string | null;
+  gateway_status: string | null;
+  status_detail: string | null;
+  payment_method_id: string | null;
+  installments: number | null;
+  pix_qr_code: string | null;
+  pix_qr_code_base64: string | null;
+  pix_ticket_url: string | null;
+  expires_at: string | null;
+  refunded_amount: string;
+};
+
+export type CardPaymentData = {
+  token: string;
+  payment_method_id: string;
+  issuer_id?: string;
+  installments: number;
+  payer_email?: string;
+  identification_type?: string;
+  identification_number?: string;
+};
+
+export function createPayment(orderId: number, method: "PIX" | "CREDIT_CARD") {
+  return apiRequest<PaymentResponse>("/payments/", {
+    method: "POST",
+    body: JSON.stringify({ order_id: orderId, metodo: method }),
+  });
+}
+
+export function processPayment(paymentId: number, data?: CardPaymentData) {
+  return apiRequest<PaymentResponse>(`/payments/${paymentId}/process`, {
+    method: "POST",
+    body: JSON.stringify(data ?? {}),
+  });
+}
+
+export function getPaymentByOrder(orderId: number) {
+  return apiRequest<PaymentResponse>(`/payments/order/${orderId}`);
+}
+
 export function getOrderById(orderId: number) {
   return apiRequest<OrderResponse>(`/orders/${orderId}`);
 }

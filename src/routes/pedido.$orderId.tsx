@@ -3,7 +3,7 @@ import { CheckCircle2, Copy, Loader2, Shirt } from "lucide-react";
 import { useEffect, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
-import { ApiError, cancelOrder, createPostSaleRequest, getOrderById, type OrderResponse } from "@/lib/api";
+import { ApiError, cancelOrder, createPostSaleRequest, getOrderById, getPaymentByOrder, type OrderResponse, type PaymentResponse } from "@/lib/api";
 import { formatCurrency } from "@/lib/formatCurrency";
 import {
   customerStatusMessage,
@@ -17,8 +17,6 @@ export const Route = createFileRoute("/pedido/$orderId")({
   component: PedidoConfirmacaoPage,
 });
 
-const PIX_CONTACT = "(19) 99846-0550";
-
 function PedidoConfirmacaoPage() {
   const { orderId } = Route.useParams();
   const numericOrderId = Number(orderId);
@@ -28,6 +26,7 @@ function PedidoConfirmacaoPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [payment, setPayment] = useState<PaymentResponse | null>(null);
 
   useEffect(() => {
     if (!Number.isFinite(numericOrderId)) {
@@ -50,12 +49,29 @@ function PedidoConfirmacaoPage() {
         }
       })
       .finally(() => setLoading(false));
+    getPaymentByOrder(numericOrderId).then(setPayment).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh from API on mount/id change
   }, [numericOrderId]);
+
+  useEffect(() => {
+    if (!order || order.status !== "PENDING_PAYMENT") return;
+    const timer = window.setInterval(() => {
+      getOrderById(order.id).then((data) => { setOrder(data); saveOrderConfirmation(data); }).catch(() => undefined);
+      getPaymentByOrder(order.id).then(setPayment).catch(() => undefined);
+    }, 10000);
+    return () => window.clearInterval(timer);
+  }, [order?.id, order?.status]);
 
   async function handleCopyOrderId() {
     if (!order) return;
     await navigator.clipboard.writeText(String(order.id));
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleCopyPix() {
+    if (!payment?.pix_qr_code) return;
+    await navigator.clipboard.writeText(payment.pix_qr_code);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   }
@@ -181,21 +197,18 @@ function PedidoConfirmacaoPage() {
               </div>
             </section>
 
-            {isPix && order.status === "PENDING_PAYMENT" ? (
+            {isPix && order.status === "PENDING_PAYMENT" && payment?.pix_qr_code ? (
               <section className="overflow-hidden rounded-[4px] border border-[var(--color-forest)]/20 bg-[var(--color-cream)] p-6">
                 <p className="eyebrow">Pagamento</p>
-                <h2 className="editorial-title mt-2 text-xl">Instruções via Pix</h2>
-                <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-[var(--color-ink)]">
-                  <li>
-                    Entre em contato pelo WhatsApp{" "}
-                    <span className="font-semibold">{PIX_CONTACT}</span> informando o número do
-                    pedido <span className="font-semibold">#{order.id}</span>.
-                  </li>
-                  <li>Nossa equipe enviará a chave Pix e confirmará o valor total do pedido.</li>
-                  <li>
-                    Após o pagamento, seu pedido será atualizado e iniciaremos a preparação.
-                  </li>
-                </ol>
+                <h2 className="editorial-title mt-2 text-xl">Pague com Pix</h2>
+                <div className="mt-5 grid gap-5 sm:grid-cols-[180px_1fr] sm:items-center">
+                  {payment.pix_qr_code_base64 && <img className="mx-auto h-44 w-44 rounded bg-white p-2" src={`data:image/png;base64,${payment.pix_qr_code_base64}`} alt="QR Code Pix" />}
+                  <div>
+                    <p className="text-sm text-muted">Escaneie o QR Code ou copie o código abaixo no aplicativo do seu banco.</p>
+                    <button type="button" onClick={handleCopyPix} className="btn-primary mt-4"><Copy className="h-4 w-4" />{copied ? "Código copiado" : "Copiar Pix copia e cola"}</button>
+                    {payment.expires_at && <p className="mt-3 text-xs text-muted">Válido até {formatOrderDateTime(payment.expires_at)}.</p>}
+                  </div>
+                </div>
               </section>
             ) : null}
 
