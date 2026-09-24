@@ -14,39 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 
 function BrandMark({ inverted = false }: { inverted?: boolean }) {
-  return (
-    <Link to="/" className="group flex shrink-0 items-center gap-2.5">
-      <span
-        className={cn(
-          "relative flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold tracking-tight",
-          inverted ? "bg-white text-[var(--color-forest)]" : "bg-[var(--color-forest)] text-white",
-        )}
-      >
-        GG
-        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[var(--color-lime)]" />
-      </span>
-      <span className="leading-none">
-        <span
-          className={cn(
-            "font-display block text-[15px] font-800 font-extrabold tracking-[0.08em] sm:text-base",
-            inverted ? "text-white" : "text-[var(--color-ink)]",
-          )}
-        >
-          GG IMPORTS
-        </span>
-        <span
-          className={cn(
-            "mt-0.5 block text-[10px] uppercase tracking-[0.18em]",
-            inverted ? "text-white/55" : "text-[var(--color-muted)]",
-          )}
-        >
-          Camisas de futebol
-        </span>
-      </span>
-    </Link>
-  );
+  return <Link to="/" aria-label="GG Imports — página inicial" className={cn("brand-wordmark shrink-0", inverted ? "text-white" : "text-[var(--color-ink)]")}>GG IMPORTS<small>FUTEBOL & IDENTIDADE</small></Link>;
 }
-
 function NavLinkItem({
   item,
   className,
@@ -88,14 +57,14 @@ function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="site-header sticky top-0 z-50">
       <div className="bg-[var(--color-forest)] px-4 py-2 text-center text-[11px] text-white/85 sm:text-xs">
         <span className="hidden sm:inline">Frete grátis acima de R$ 399 · </span>
         <span>5% OFF no Pix · Envio para todo o Brasil</span>
       </div>
 
-      <div className="border-b border-[var(--color-line)] bg-[var(--color-canvas)]/90 backdrop-blur-md">
-        <div className="container-page flex items-center justify-between gap-4 py-3.5">
+      <div className="border-b border-[var(--color-line)] bg-[var(--color-canvas)]">
+        <div className="container-page flex items-center justify-between gap-4 py-5">
           <BrandMark />
 
           <nav className="hidden items-center gap-5 xl:flex">
@@ -104,7 +73,7 @@ function Header() {
                 key={`${item.to}-${item.label}`}
                 item={item}
                 className={cn(
-                  "text-[13px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-forest)]",
+                  "text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-forest)]",
                   isAdmin &&
                     (item.to.startsWith("/admin/pedidos") ||
                       item.to.startsWith("/admin/cadastrar"))
@@ -152,6 +121,8 @@ function Header() {
               type="button"
               className="border border-[var(--color-line)] p-2 text-[var(--color-ink)] transition-colors hover:bg-[var(--color-cream)] xl:hidden"
               style={{ borderRadius: 4 }}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-navigation"
               aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
               onClick={() => setMenuOpen((open) => !open)}
             >
@@ -161,6 +132,8 @@ function Header() {
         </div>
 
         <div
+          id="mobile-navigation"
+          inert={!menuOpen}
           className={cn(
             "overflow-hidden border-t border-[var(--color-line)] bg-[var(--color-canvas)] transition-all xl:hidden",
             menuOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0",
@@ -197,6 +170,7 @@ function Header() {
 function Footer() {
   return (
     <footer className="bg-[var(--color-forest)] text-white/75">
+      <div className="container-page footer-signature text-white" aria-hidden="true">É MAIS QUE FUTEBOL.</div>
       <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
           <BrandMark inverted />
@@ -204,7 +178,7 @@ function Footer() {
             Camisas que carregam história, rivalidade e memória. Curadoria para quem vive o
             futebol.
           </p>
-          <p className="font-serif mt-5 text-lg italic text-[var(--color-lime)]">
+          <p className="mt-5 text-sm text-[var(--color-lime)]">
             Feito para quem vive o futebol
           </p>
         </div>
@@ -302,8 +276,9 @@ function FooterColumn({
 export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
+      <a className="skip-link" href="#main-content">Pular para o conteúdo</a>
       <Header />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
       <Footer />
     </div>
   );

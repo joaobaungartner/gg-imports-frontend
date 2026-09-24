@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, PackagePlus, Search, Shirt } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, PackagePlus, Search, Shirt, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogProductCard } from "@/components/CatalogProductCard";
 import { ProductDetailsModal } from "@/components/products/ProductDetailsModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import {
   deactivateManyProducts,
   deactivateProduct,
   deleteManyProducts,
+  invalidateApiCache,
   listCategories,
   listProducts,
 } from "@/lib/api";
@@ -17,10 +18,14 @@ import { cn } from "@/lib/utils";
 
 type CatalogoSearch = {
   created?: string;
+  categoria?: string;
+  produto?: number;
 };
 
 export const Route = createFileRoute("/catalogo")({
   validateSearch: (search: Record<string, unknown>): CatalogoSearch => ({
+    categoria: typeof search.categoria === "string" ? search.categoria : undefined,
+    produto: Number.isInteger(Number(search.produto)) && Number(search.produto) > 0 ? Number(search.produto) : undefined,
     created: typeof search.created === "string" ? search.created : undefined,
   }),
   component: CatalogoPage,
@@ -29,7 +34,8 @@ export const Route = createFileRoute("/catalogo")({
 function CatalogoPage() {
   const { isAdmin } = useAuth();
   const { addToCart } = useCart();
-  const { created } = Route.useSearch();
+  const { created, categoria, produto } = Route.useSearch();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,7 +44,9 @@ function CatalogoPage() {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>(categoria ?? "all");
+
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const loadCatalog = useCallback(async (): Promise<CatalogProduct[]> => {
     setLoading(true);
@@ -46,7 +54,7 @@ function CatalogoPage() {
 
     try {
       const [apiProducts, categories] = await Promise.all([
-        listProducts(true),
+        listProducts(isAdmin ? null : true),
         listCategories(),
       ]);
 
@@ -63,7 +71,7 @@ function CatalogoPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     loadCatalog();
@@ -74,6 +82,19 @@ function CatalogoPage() {
       setBanner("Produto cadastrado com sucesso e já disponível no catálogo.");
     }
   }, [created]);
+
+  useEffect(() => {
+    setSelectedCategory(categoria ?? "all");
+  }, [categoria]);
+
+  useEffect(() => {
+    if (!produto) return;
+    const match = products.find((item) => item.variantes.some((variant) => variant.id === produto));
+    if (match) {
+      setSelectedProduct(match);
+      setIsModalOpen(true);
+    }
+  }, [produto, products]);
 
   const categories = useMemo(() => {
     const unique = Array.from(
@@ -86,6 +107,10 @@ function CatalogoPage() {
     const query = searchQuery.trim().toLowerCase();
 
     return products.filter((product) => {
+      const active = product.variantes.some((variant) => variant.ativo);
+      if (!isAdmin && !active) return false;
+      if (isAdmin && statusFilter === "active" && !active) return false;
+      if (isAdmin && statusFilter === "inactive" && active) return false;
       const matchesCategory =
         selectedCategory === "all" || product.categoria === selectedCategory;
 
@@ -99,7 +124,7 @@ function CatalogoPage() {
         product.tipo.toLowerCase().includes(query)
       );
     });
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory, isAdmin, statusFilter]);
 
   function openProductModal(product: CatalogProduct) {
     setSelectedProduct(product);
@@ -113,6 +138,7 @@ function CatalogoPage() {
 
   async function handleDeactivateProduct(productIds: number[]) {
     await deactivateManyProducts(productIds);
+    invalidateApiCache("/products/");
     setBanner("Produto desativado com sucesso.");
     await loadCatalog();
   }
@@ -120,6 +146,7 @@ function CatalogoPage() {
   async function handleDeactivateSize(productId: number) {
     const current = selectedProduct;
     await deactivateProduct(productId);
+    invalidateApiCache("/products/");
     setBanner("Tamanho desativado com sucesso.");
 
     const catalog = await loadCatalog();
@@ -145,6 +172,7 @@ function CatalogoPage() {
 
   async function handleDeleteProduct(productIds: number[]) {
     await deleteManyProducts(productIds);
+    invalidateApiCache("/products/");
     setBanner("Produto excluído com sucesso.");
     await loadCatalog();
   }
@@ -154,25 +182,20 @@ function CatalogoPage() {
       <div className="container-page py-12 lg:py-16">
         <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="eyebrow">Curadoria GG</p>
+            <p className="eyebrow">GG Imports / Catálogo</p>
             <h1 className="editorial-title mt-3 text-4xl sm:text-5xl">
-              Escolha o seu <span className="editorial-serif">manto</span>
+              ENCONTRE SEU MANTO.
             </h1>
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
-              Busque por nome, clube, categoria ou tipo e filtre o catálogo com a seleção GG Imports.
+              Seu clube, sua seleção, sua próxima camisa.
             </p>
           </div>
 
           {isAdmin && (
-            <>
-              <Link to="/admin/pedidos" className="btn-secondary shrink-0">
-                Pedidos
-              </Link>
               <Link to="/admin/cadastrar-produto" className="btn-primary shrink-0">
                 <PackagePlus className="h-4 w-4" />
                 Cadastrar produto
               </Link>
-            </>
           )}
         </div>
 
@@ -184,21 +207,50 @@ function CatalogoPage() {
 
         {!loading && !error && products.length > 0 && (
           <div className="mb-8 space-y-4">
+            {isAdmin && (
+              <div className="flex flex-wrap items-center gap-3">
+                <label htmlFor="catalog-status" className="text-sm font-medium">Status do produto</label>
+                <select id="catalog-status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="field-input max-w-xs">
+                  <option value="all">Todos — ativos e inativos</option>
+                  <option value="active">Ativos</option>
+                  <option value="inactive">Inativos</option>
+                </select>
+                <p className="text-xs text-[var(--color-muted)]">Produtos inativos aparecem apenas na visão administrativa.</p>
+              </div>
+            )}
             <div className="relative max-w-xl">
               <label htmlFor="catalog-search" className="field-label">
                 Buscar no catálogo
               </label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <div className="catalog-search-field">
+                <Search size={20} className="catalog-search-icon" aria-hidden="true" />
                 <input
                   id="catalog-search"
+                  ref={searchInputRef}
+                  aria-describedby="catalog-search-hint"
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Nome, clube, categoria ou tipo..."
-                  className="field-input pl-10"
+                  placeholder="Busque sua camisa ou seu time"
+                  className="catalog-search-input"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="catalog-search-clear"
+                    aria-label="Limpar busca"
+                    onClick={() => {
+                      setSearchQuery("");
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <X size={18} aria-hidden="true" />
+                  </button>
+                )}
               </div>
+              <p id="catalog-search-hint" className="mt-2 text-xs text-[var(--color-muted)]">
+                Busque por nome, clube, categoria ou tipo. Os resultados aparecem ao digitar.
+              </p>
             </div>
 
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
@@ -263,6 +315,7 @@ function CatalogoPage() {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("all");
+                setStatusFilter("all");
               }}
             >
               Limpar filtros

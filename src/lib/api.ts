@@ -201,11 +201,11 @@ export function updateCategory(id: number, payload: Partial<Category>) {
 }
 
 export function listProducts(
-  active = true,
+  active: boolean | null = true,
   options?: { collection?: "promotions" | "launches" },
 ) {
   const params = new URLSearchParams();
-  params.set("active", String(active));
+  if (active !== null) params.set("active", String(active));
   if (options?.collection) {
     params.set("collection", options.collection);
   }

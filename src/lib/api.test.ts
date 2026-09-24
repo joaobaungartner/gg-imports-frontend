@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { apiRequest, invalidateApiCache } from "./api";
+import { apiRequest, invalidateApiCache, listProducts } from "./api";
 
 describe("deduplicação de GETs", () => {
   beforeEach(() => {
@@ -33,5 +33,25 @@ describe("deduplicação de GETs", () => {
     invalidateApiCache("/categories/");
     await apiRequest("/categories/?active=true");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+
+describe("filtro de status do catálogo", () => {
+  beforeEach(() => {
+    invalidateApiCache();
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null) });
+  });
+
+  it("mantém a consulta pública apenas com ativos e permite todos na consulta administrativa", async () => {
+    const fetchMock = vi.fn(async () => new Response("[]", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await listProducts();
+    await listProducts(null);
+    await listProducts(false);
+    const urls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));
+    expect(urls[0]).toContain("active=true");
+    expect(urls[1]).not.toContain("active=");
+    expect(urls[2]).toContain("active=false");
   });
 });

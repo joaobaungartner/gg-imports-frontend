@@ -233,14 +233,6 @@ function CadastrarProdutoPage() {
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               Adicione novos mantos ao catálogo GG Imports.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link to="/admin/pedidos" className="btn-secondary">
-                Pedidos
-              </Link>
-              <Link to="/catalogo" className="btn-ghost">
-                Produtos
-              </Link>
-            </div>
           </div>
 
           {successInfo && (

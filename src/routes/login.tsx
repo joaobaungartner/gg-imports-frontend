@@ -115,7 +115,6 @@ function LoginPage() {
                 <label htmlFor="senha" className="field-label">
                   Senha
                 </label>
-                <Link to="/esqueci-senha" className="text-sm font-semibold text-forest hover:underline">Esqueci minha senha</Link>
                 <input
                   id="senha"
                   type="password"
@@ -125,6 +124,14 @@ function LoginPage() {
                   className="field-input"
                   placeholder="••••••••"
                 />
+                <div className="mt-2 flex justify-end">
+                  <Link
+                    to="/esqueci-senha"
+                    className="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-[var(--color-muted)] underline-offset-4 hover:text-[var(--color-ink)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4"
+                  >
+                    Esqueci minha senha
+                  </Link>
+                </div>
               </div>
             </div>
 

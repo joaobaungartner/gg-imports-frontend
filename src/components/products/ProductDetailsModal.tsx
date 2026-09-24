@@ -85,6 +85,7 @@ export function ProductDetailsModal({
   }
 
   const activeProduct = product;
+  const hasActiveVariants = product.variantes.some((variant) => variant.ativo);
 
   async function runAdminAction(actionKey: string, action: () => Promise<void>) {
     setError("");
@@ -248,6 +249,11 @@ export function ProductDetailsModal({
               </p>
             </div>
 
+            {isAdmin && !hasActiveVariants && (
+              <p role="status" className="rounded border border-[var(--color-line)] bg-[var(--color-cream)] p-3 text-sm">
+                Produto inativo. Não aparece na vitrine dos clientes. Selecione um tamanho para consultar ou editar seu cadastro.
+              </p>
+            )}
             {product.descricao && (
               <div className="border-y border-[var(--color-line)] py-4">
                 <p className="text-sm leading-relaxed text-[var(--color-muted)]">
@@ -267,7 +273,7 @@ export function ProductDetailsModal({
                     <button
                       key={variant.id}
                       type="button"
-                      disabled={!available}
+                      disabled={!available && !isAdmin}
                       onClick={() => {
                         setSelectedVariantId(variant.id);
                         setQuantidade(1);
@@ -282,7 +288,7 @@ export function ProductDetailsModal({
                           "cursor-not-allowed border-[var(--color-line)] bg-[var(--color-cream)] text-[var(--color-muted)] opacity-55",
                       )}
                     >
-                      {variant.tamanho}
+                      {variant.tamanho}{isAdmin && !variant.ativo ? " · Inativo" : ""}
                     </button>
                   );
                 })}
@@ -347,7 +353,7 @@ export function ProductDetailsModal({
               </div>
             )}
 
-            <button type="button" onClick={handleAddToCart} className="btn-primary w-full py-3.5 text-base">
+            <button type="button" disabled={!product.inStock || (selectedVariant !== null && !isVariantAvailable(selectedVariant))} onClick={handleAddToCart} className="btn-primary w-full py-3.5 text-base">
               Adicionar ao carrinho
             </button>
 
@@ -382,7 +388,7 @@ export function ProductDetailsModal({
                   )}
                   <button
                     type="button"
-                    disabled={loadingAction !== null}
+                    disabled={loadingAction !== null || !hasActiveVariants}
                     onClick={handleDeactivateProduct}
                     className="rounded-[4px] border border-[color-mix(in_srgb,var(--color-danger)_40%,white)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,white)] disabled:opacity-60"
                   >
@@ -392,7 +398,7 @@ export function ProductDetailsModal({
                   </button>
                   <button
                     type="button"
-                    disabled={loadingAction !== null}
+                    disabled={loadingAction !== null || !selectedVariant?.ativo}
                     onClick={handleDeactivateSize}
                     className="rounded-[4px] border border-[color-mix(in_srgb,var(--color-danger)_40%,white)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,white)] disabled:opacity-60"
                   >

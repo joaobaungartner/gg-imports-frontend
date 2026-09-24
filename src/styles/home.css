@@ -1,0 +1,67 @@
+/* Home: aligned retail sections with a compact campaign and visible products. */
+.home-storefront { background: #fff; }
+.home-banner-wrap { padding-top: 1.5rem; }
+.home-banner { position: relative; isolation: isolate; overflow: hidden; background: #181d19; color: white; min-height: 25rem; display: flex; align-items: center; }
+.home-banner::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(10 18 13 / .95), rgb(10 18 13 / .65) 48%, rgb(10 18 13 / .1)); }
+.home-banner-image { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 55%; }
+.home-banner-copy { padding: 3rem; }
+.home-banner-copy .eyebrow { color: #e6ff57; }
+.home-banner h1 { font-family: var(--font-display); font-size: clamp(3rem, 5.8vw, 5.5rem); font-weight: 800; line-height: .98; letter-spacing: -.02em; margin-block: 1.25rem; }
+.home-banner h1 span { color: #e6ff57; }
+.home-banner-copy > p:not(.eyebrow) { color: #e0e3df; margin-bottom: 1.5rem; font-size: 1rem; }
+.home-banner .btn-primary { background: #e6ff57; color: #171717; gap: 1.5rem; border-color: #e6ff57; }
+.home-banner .btn-primary:hover { background: white; border-color: white; }
+.home-banner-signature { position: absolute; right: 1.5rem; bottom: 1.25rem; font-size: .65rem; letter-spacing: .12em; }
+.home-service-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--color-line); padding-block: 1.5rem; }
+.home-service-strip > * { display: flex; align-items: center; justify-content: center; gap: 1rem; padding-inline: 1rem; }
+.home-service-strip > * + * { border-left: 1px solid var(--color-line); }
+.home-service-strip svg { flex-shrink: 0; }
+.home-service-strip strong, .home-service-strip small { display: block; }
+.home-service-strip strong { font-size: .875rem; font-weight: 600; }
+.home-service-strip small { font-size: .75rem; color: var(--color-muted); margin-top: .25rem; }
+.home-service-strip a:hover strong { text-decoration: underline; }
+.home-storefront .store-section { padding-block: 3rem; }
+.home-storefront .store-section-heading { margin-bottom: 1.5rem; }
+.home-storefront .store-section-heading h2, .home-storefront .shop-guide h2 { font-size: clamp(2rem, 3vw, 3rem); margin-top: .5rem; }
+.home-storefront .category-index { gap: .5rem; border: 0; padding: 0; margin-bottom: 1.5rem; }
+.home-storefront .category-index a { border: 1px solid var(--color-line); padding: .65rem 1rem; gap: 1rem; }
+.home-storefront .category-index a:hover { background: #f1f3e9; }
+.home-storefront .store-product-image { aspect-ratio: 1; }
+.home-storefront .store-product-meta h3 { min-height: 2.8em; }
+.home-storefront .store-product-meta > div > span:first-child { font-size: 1rem; font-weight: 700; }
+.home-collections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding-bottom: .5rem; }
+.home-collection { position: relative; isolation: isolate; overflow: hidden; min-height: 16rem; padding: 2rem; display: flex; flex-direction: column; align-items: start; }
+.home-collection-new { background: #1d2921; color: white; }
+.home-collection-offers { background: #e6ff57; color: #171717; }
+.home-collection .eyebrow { color: inherit; }
+.home-collection h2 { font-size: clamp(2rem, 3.2vw, 3.25rem); margin-block: 1.25rem; }
+.home-collection-link { display: inline-flex; align-items: center; gap: 1rem; font-size: .875rem; margin-top: auto; border-bottom: 1px solid currentColor; padding-bottom: .5rem; }
+.home-collection-art { position: absolute; right: -1.5rem; bottom: -.5rem; opacity: .12; z-index: -1; transform: rotate(-15deg); }
+.home-collection-number { position: absolute; right: -1rem; bottom: -2rem; font-family: var(--font-display); font-size: 12rem; font-weight: 800; opacity: .08; z-index: -1; }
+.home-collection:hover .home-collection-link { gap: 1.5rem; }
+.home-storefront .shop-guide { padding-block: 3rem; margin-top: 2rem; border-top: 1px solid var(--color-line); }
+.home-storefront a:focus-visible { outline: 3px solid #74822b; outline-offset: 4px; }
+@media (max-width: 63.99rem) {
+  .home-banner-copy { padding: 2rem; }
+  .home-banner { min-height: 22rem; }
+  .home-service-strip > * { gap: .65rem; padding-inline: .65rem; }
+}
+@media (max-width: 39.99rem) {
+  .home-banner-wrap { padding-top: .75rem; }
+  .home-banner { min-height: 21rem; }
+  .home-banner-copy { padding: 1.5rem; }
+  .home-banner h1 { font-size: clamp(2.5rem, 10vw, 4rem); }
+  .home-banner-signature { display: none; }
+  .home-banner::after { background: rgb(10 18 13 / .75); }
+  .home-service-strip { padding-block: 1rem; gap: .5rem; }
+  .home-service-strip > * { flex-direction: column; text-align: center; gap: .5rem; padding-inline: .25rem; }
+  .home-service-strip strong { font-size: .7rem; }
+  .home-service-strip small { display: none; }
+  .home-storefront .store-section { padding-block: 2rem; }
+  .home-storefront .store-section-heading { gap: .5rem; }
+  .home-storefront .category-index { flex-wrap: nowrap; overflow-x: auto; padding: .25rem .25rem .75rem; }
+  .home-storefront .category-index a { flex-shrink: 0; }
+  .home-collections { grid-template-columns: 1fr; gap: 1rem; }
+  .home-collection { min-height: 14rem; padding: 1.5rem; }
+  .home-storefront .shop-guide { gap: 1.5rem; margin-top: 1rem; padding-block: 2rem; }
+}
