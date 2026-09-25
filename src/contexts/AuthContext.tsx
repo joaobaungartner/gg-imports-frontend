@@ -19,6 +19,7 @@ import {
 } from "@/lib/auth";
 import { setUnauthorizedHandler } from "@/lib/authSession";
 import { isTokenExpired } from "@/utils/authToken";
+import { adoptGuestCart } from "@/lib/cart";
 
 type LogoutOptions = {
   sessionExpired?: boolean;
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const login = useCallback((response: LoginResponse) => {
+    if (!getUser() && response.user.role !== "ADMIN") adoptGuestCart(response.user.id);
     invalidateApiCache();
     saveToken(response.access_token);
     saveUser(response.user);

@@ -34,6 +34,18 @@ describe("deduplicação de GETs", () => {
     await apiRequest("/categories/?active=true");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("não compartilha consultas com ciclos de cancelamento independentes", async () => {
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const first = new AbortController();
+    const second = new AbortController();
+    await Promise.all([
+      apiRequest("/carts/me/current", { signal: first.signal }),
+      apiRequest("/carts/me/current", { signal: second.signal }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 

@@ -76,7 +76,9 @@ export async function apiRequest<T>(
   }
 
   const cacheKey = `${token ?? "public"}:${path}`;
-  if (method === "GET") {
+  // Requests with their own cancellation lifecycle must not share an in-flight GET.
+  const cacheable = method === "GET" && !options.signal;
+  if (cacheable) {
     const cached = getCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) return cached.value as T;
     if (cached) getCache.delete(cacheKey);
@@ -91,13 +93,13 @@ export async function apiRequest<T>(
 
     if (response.status === 204) return undefined as T;
     const data = await response.json() as T;
-    if (method === "GET") getCache.set(cacheKey, { value: data, expiresAt: Date.now() + GET_CACHE_TTL_MS });
+    if (cacheable) getCache.set(cacheKey, { value: data, expiresAt: Date.now() + GET_CACHE_TTL_MS });
     return data;
   })();
 
-  if (method === "GET") inFlightGets.set(cacheKey, request);
+  if (cacheable) inFlightGets.set(cacheKey, request);
   try { return await request; }
-  finally { if (method === "GET") inFlightGets.delete(cacheKey); }
+  finally { if (cacheable) inFlightGets.delete(cacheKey); }
 }
 
 export type LoginPayload = {
@@ -423,14 +425,15 @@ export type ServerCart = {
   valor_total: string;
 };
 
-export function getMyCart() {
-  return apiRequest<ServerCart>("/carts/me/current");
+export function getMyCart(signal?: AbortSignal) {
+  return apiRequest<ServerCart>("/carts/me/current", { signal });
 }
 
-export function syncMyCart(items: Array<{ product_id: number; quantidade: number }>) {
+export function syncMyCart(items: Array<{ product_id: number; quantidade: number }>, signal?: AbortSignal) {
   return apiRequest<ServerCart>("/carts/me/current", {
     method: "PUT",
     body: JSON.stringify({ items }),
+    signal,
   });
 }
 

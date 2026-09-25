@@ -12,7 +12,6 @@ import {
   addCartItem,
   clearCartStorage,
   getCartItems,
-  getCartItemsCount,
   getCartTotal,
   removeCartItem,
   updateCartQuantity,
@@ -21,6 +20,7 @@ import {
 } from "@/lib/cart";
 import { getMyCart, listProducts, syncMyCart } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { getToken, getUser } from "@/lib/auth";
 
 type AddToCartInput = Omit<CartItem, "quantidade"> & { quantidade: number };
 
@@ -39,106 +39,93 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isAdmin } = useAuth();
-  const [items, setItems] = useState<CartItem[]>(() => getCartItems());
-  const [itemCount, setItemCount] = useState(() => getCartItemsCount());
-  const hydrationStarted = useRef(false);
-  const hydrated = useRef(false);
-  const skipNextSync = useRef(false);
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  const owner = isAuthenticated && user ? user.id : null;
+  // A new identity gets entirely new state, timers and hydration lifecycle.
+  return <ScopedCartProvider key={`${owner ?? "guest"}:${isAdmin}`} owner={owner} syncEnabled={owner !== null && !isAdmin}>{children}</ScopedCartProvider>;
+}
+
+function ScopedCartProvider({ children, owner, syncEnabled }: {
+  children: ReactNode;
+  owner: number | null;
+  syncEnabled: boolean;
+}) {
+  const [items, setItems] = useState<CartItem[]>(() => getCartItems(owner));
+  const [ready, setReady] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const revision = useRef(0);
+  const [sessionToken] = useState(getToken);
+  const sessionIsCurrent = useCallback(() =>
+    getToken() === sessionToken && (getUser()?.id ?? null) === owner,
+  [owner, sessionToken]);
 
   const syncState = useCallback((nextItems: CartItem[]) => {
+    revision.current += 1;
     setItems(nextItems);
-    setItemCount(getCartItemsCount());
+    setDirty(true);
   }, []);
 
-  const refreshCart = useCallback(() => {
-    syncState(getCartItems());
-  }, [syncState]);
-
-  const addToCart = useCallback(
-    (item: AddToCartInput) => {
-      const nextItems = addCartItem(item);
-      syncState(nextItems);
-    },
-    [syncState],
-  );
-
-  const removeFromCart = useCallback(
-    (productId: number, tamanho: string) => {
-      const nextItems = removeCartItem(productId, tamanho);
-      syncState(nextItems);
-    },
-    [syncState],
-  );
-
-  const updateQuantity = useCallback(
-    (productId: number, tamanho: string, quantidade: number) => {
-      const nextItems = updateCartQuantity(productId, tamanho, quantidade);
-      syncState(nextItems);
-    },
-    [syncState],
-  );
-
+  const addToCart = useCallback((item: AddToCartInput) => {
+    if (sessionIsCurrent()) syncState(addCartItem(item, owner));
+  }, [owner, sessionIsCurrent, syncState]);
+  const removeFromCart = useCallback((productId: number, tamanho: string) => {
+    if (sessionIsCurrent()) syncState(removeCartItem(productId, tamanho, owner));
+  }, [owner, sessionIsCurrent, syncState]);
+  const updateQuantity = useCallback((productId: number, tamanho: string, quantidade: number) => {
+    if (sessionIsCurrent()) syncState(updateCartQuantity(productId, tamanho, quantidade, owner));
+  }, [owner, sessionIsCurrent, syncState]);
   const clearCart = useCallback(() => {
-    const nextItems = clearCartStorage();
-    syncState(nextItems);
-  }, [syncState]);
+    if (sessionIsCurrent()) syncState(clearCartStorage(owner));
+  }, [owner, sessionIsCurrent, syncState]);
 
   useEffect(() => {
-    refreshCart();
-  }, [refreshCart]);
-
-  useEffect(() => {
-    if (!isAuthenticated || isAdmin || hydrationStarted.current) return;
-    hydrationStarted.current = true;
-    async function hydrateAndMergeCart() {
+    if (!syncEnabled || !sessionIsCurrent()) return;
+    let active = true;
+    const controller = new AbortController();
+    const initialRevision = revision.current;
+    async function hydrateCart() {
       try {
-        const localItems = getCartItems();
+        const localItems = getCartItems(owner);
         const cartRequest = localItems.length > 0
-          ? syncMyCart(localItems.map((item) => ({ product_id: item.productId, quantidade: item.quantidade })))
-          : getMyCart();
+          ? syncMyCart(localItems.map((item) => ({ product_id: item.productId, quantidade: item.quantidade })), controller.signal)
+          : getMyCart(controller.signal);
         const [serverCart, products] = await Promise.all([cartRequest, listProducts(true)]);
+        if (!active || !sessionIsCurrent()) return;
         const productsById = new Map(products.map((product) => [product.id, product]));
         const merged = serverCart.itens.flatMap((item) => {
           const product = productsById.get(item.product_id);
           return product ? [{ productId: product.id, nome: product.nome, clube: product.clube, tipo: product.tipo, tamanho: product.tamanho, preco: Number(product.preco), quantidade: item.quantidade, imagem_url: product.imagem_url, estoque: product.estoque }] : [];
         });
-        skipNextSync.current = true;
-        syncState(replaceCartStorage(merged));
+        // Do not overwrite edits made while hydration was in flight.
+        if (revision.current === initialRevision) setItems(replaceCartStorage(merged, owner));
       } catch {
-        // Mantém o carrinho local se a API estiver indisponível.
+        // Keep only this owner's local cart when the API is unavailable.
       } finally {
-        hydrated.current = true;
+        if (active && sessionIsCurrent()) setReady(true);
       }
     }
-    void hydrateAndMergeCart();
-  }, [isAuthenticated, isAdmin, syncState]);
+    void hydrateCart();
+    return () => { active = false; controller.abort(); };
+  }, [owner, syncEnabled, sessionIsCurrent]);
 
   useEffect(() => {
-    if (!isAuthenticated || isAdmin || !hydrated.current) return;
-    if (skipNextSync.current) { skipNextSync.current = false; return; }
+    if (!syncEnabled || !ready || !dirty) return;
+    const controller = new AbortController();
     const timeout = window.setTimeout(() => {
-      void syncMyCart(items.map((item) => ({ product_id: item.productId, quantidade: item.quantidade }))).catch(() => undefined);
+      // Auth storage changes synchronously, before React effect cleanup.
+      if (!sessionIsCurrent()) return;
+      void syncMyCart(items.map((item) => ({ product_id: item.productId, quantidade: item.quantidade })), controller.signal).catch(() => undefined);
     }, 250);
-    return () => window.clearTimeout(timeout);
-  }, [isAuthenticated, isAdmin, items]);
+    return () => { window.clearTimeout(timeout); controller.abort(); };
+  }, [syncEnabled, ready, dirty, items, sessionIsCurrent]);
 
+  const itemCount = items.reduce((total, item) => total + item.quantidade, 0);
   const cartTotal = useMemo(() => getCartTotal(items), [items]);
-
-  const value = useMemo(
-    () => ({
-      items,
-      itemCount,
-      cartTotal,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      getCartTotal: () => getCartTotal(items),
-      getCartItemsCount: () => getCartItemsCount(),
-    }),
-    [items, itemCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart],
-  );
+  const value = useMemo(() => ({
+    items, itemCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart,
+    getCartTotal: () => cartTotal,
+    getCartItemsCount: () => itemCount,
+  }), [items, itemCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
