@@ -9,11 +9,23 @@ type ApiErrorBody = {
 const GET_CACHE_TTL_MS = 60_000;
 const getCache = new Map<string, { expiresAt: number; value: unknown }>();
 const inFlightGets = new Map<string, Promise<unknown>>();
+let cacheGeneration = 0;
+
+function isCacheablePath(path: string): boolean {
+  // Only public catalog/content reads may be reused. Account and transaction
+  // state (including future endpoints) is fresh by default.
+  return /^\/(products|categories|site-content)(\/|\?|$)/.test(path);
+}
 
 export function invalidateApiCache(pathPrefix?: string) {
+  cacheGeneration += 1;
   for (const key of getCache.keys()) {
     const path = key.slice(key.indexOf(":") + 1);
     if (!pathPrefix || path.startsWith(pathPrefix)) getCache.delete(key);
+  }
+  for (const key of inFlightGets.keys()) {
+    const path = key.slice(key.indexOf(":") + 1);
+    if (!pathPrefix || path.startsWith(pathPrefix)) inFlightGets.delete(key);
   }
 }
 
@@ -77,7 +89,8 @@ export async function apiRequest<T>(
 
   const cacheKey = `${token ?? "public"}:${path}`;
   // Requests with their own cancellation lifecycle must not share an in-flight GET.
-  const cacheable = method === "GET" && !options.signal;
+  const cacheable = method === "GET" && isCacheablePath(path) && !options.signal
+    && (!options.cache || options.cache === "default");
   if (cacheable) {
     const cached = getCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) return cached.value as T;
@@ -86,20 +99,32 @@ export async function apiRequest<T>(
     if (existing) return existing as Promise<T>;
   }
 
+  const generation = cacheGeneration;
   const request = (async () => {
-    const response = await fetch(`${config.apiBaseUrl}${path}`, { ...options, headers });
+    const response = await fetch(`${config.apiBaseUrl}${path}`, {
+      ...options, headers, cache: method === "GET" ? "no-store" : options.cache,
+    });
 
     await handleApiResponse(response, path);
 
+    // A mutation may affect several resources (e.g. addresses and /auth/me).
+    // Invalidate before returning, including successful 204 responses.
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) invalidateApiCache();
+
     if (response.status === 204) return undefined as T;
     const data = await response.json() as T;
-    if (cacheable) getCache.set(cacheKey, { value: data, expiresAt: Date.now() + GET_CACHE_TTL_MS });
+    if (cacheable && generation === cacheGeneration) {
+      getCache.set(cacheKey, { value: data, expiresAt: Date.now() + GET_CACHE_TTL_MS });
+    }
     return data;
   })();
 
   if (cacheable) inFlightGets.set(cacheKey, request);
   try { return await request; }
-  finally { if (cacheable) inFlightGets.delete(cacheKey); }
+  finally {
+    // A superseded request must not remove a newer request's deduplication entry.
+    if (cacheable && inFlightGets.get(cacheKey) === request) inFlightGets.delete(cacheKey);
+  }
 }
 
 export type LoginPayload = {
