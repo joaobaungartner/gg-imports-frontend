@@ -6,6 +6,10 @@
       "destination": "http://44.223.105.77/:resource/"
     },
     {
+      "source": "/api/:resource/",
+      "destination": "http://44.223.105.77/:resource/"
+    },
+    {
       "source": "/api/:resource/:path*",
       "destination": "http://44.223.105.77/:resource/:path*"
     },
