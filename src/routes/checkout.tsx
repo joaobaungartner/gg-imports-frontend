@@ -91,6 +91,7 @@ function CheckoutPage() {
   const [loadingCoupon, setLoadingCoupon] = useState(false);
   const pendingOrderId = useRef<number | null>(null);
   const pendingPaymentId = useRef<number | null>(null);
+  const checkoutCompleted = useRef(false);
 
   useEffect(() => {
     const token = getToken();
@@ -100,7 +101,7 @@ function CheckoutPage() {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 && !checkoutCompleted.current) {
       navigate({ to: "/carrinho" });
     }
   }, [items.length, navigate]);
@@ -320,8 +321,9 @@ function CheckoutPage() {
       }
 
       saveOrderConfirmation(order);
+      checkoutCompleted.current = true;
       clearCart();
-      await navigate({ to: "/pedido/$orderId", params: { orderId: String(order.id) } });
+      await navigate({ to: paymentMethod === "PIX" ? "/pagamento/pix/$orderId" : "/pedido/$orderId", params: { orderId: String(order.id) } });
     } catch (err) {
       const message =
         err instanceof ApiError || err instanceof Error ? err.message : "Não foi possível criar o pedido.";

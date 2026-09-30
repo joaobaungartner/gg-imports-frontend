@@ -36,6 +36,7 @@ import { Route as AdminLancamentosRouteImport } from './routes/admin/lancamentos
 import { Route as AdminGestaoRouteImport } from './routes/admin/gestao'
 import { Route as AdminComoComprarRouteImport } from './routes/admin/como-comprar'
 import { Route as AdminCadastrarProdutoRouteImport } from './routes/admin/cadastrar-produto'
+import { Route as PagamentoPixOrderIdRouteImport } from './routes/pagamento.pix.$orderId'
 import { Route as AdminProdutosProductIdRouteImport } from './routes/admin/produtos.$productId'
 import { Route as AdminPedidosOrderIdRouteImport } from './routes/admin/pedidos.$orderId'
 
@@ -174,6 +175,11 @@ const AdminCadastrarProdutoRoute = AdminCadastrarProdutoRouteImport.update({
   path: '/admin/cadastrar-produto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagamentoPixOrderIdRoute = PagamentoPixOrderIdRouteImport.update({
+  id: '/pagamento/pix/$orderId',
+  path: '/pagamento/pix/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProdutosProductIdRoute = AdminProdutosProductIdRouteImport.update({
   id: '/admin/produtos/$productId',
   path: '/admin/produtos/$productId',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/produto/$id': typeof ProdutoIdRoute
   '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
   '/admin/produtos/$productId': typeof AdminProdutosProductIdRoute
+  '/pagamento/pix/$orderId': typeof PagamentoPixOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/produto/$id': typeof ProdutoIdRoute
   '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
   '/admin/produtos/$productId': typeof AdminProdutosProductIdRoute
+  '/pagamento/pix/$orderId': typeof PagamentoPixOrderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/produto/$id': typeof ProdutoIdRoute
   '/admin/pedidos/$orderId': typeof AdminPedidosOrderIdRoute
   '/admin/produtos/$productId': typeof AdminProdutosProductIdRoute
+  '/pagamento/pix/$orderId': typeof PagamentoPixOrderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/produto/$id'
     | '/admin/pedidos/$orderId'
     | '/admin/produtos/$productId'
+    | '/pagamento/pix/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/produto/$id'
     | '/admin/pedidos/$orderId'
     | '/admin/produtos/$productId'
+    | '/pagamento/pix/$orderId'
   id:
     | '__root__'
     | '/'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/produto/$id'
     | '/admin/pedidos/$orderId'
     | '/admin/produtos/$productId'
+    | '/pagamento/pix/$orderId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -404,6 +416,7 @@ export interface RootRouteChildren {
   PedidoOrderIdRoute: typeof PedidoOrderIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
   AdminProdutosProductIdRoute: typeof AdminProdutosProductIdRoute
+  PagamentoPixOrderIdRoute: typeof PagamentoPixOrderIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCadastrarProdutoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pagamento/pix/$orderId': {
+      id: '/pagamento/pix/$orderId'
+      path: '/pagamento/pix/$orderId'
+      fullPath: '/pagamento/pix/$orderId'
+      preLoaderRoute: typeof PagamentoPixOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/produtos/$productId': {
       id: '/admin/produtos/$productId'
       path: '/admin/produtos/$productId'
@@ -655,6 +675,7 @@ const rootRouteChildren: RootRouteChildren = {
   PedidoOrderIdRoute: PedidoOrderIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
   AdminProdutosProductIdRoute: AdminProdutosProductIdRoute,
+  PagamentoPixOrderIdRoute: PagamentoPixOrderIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
