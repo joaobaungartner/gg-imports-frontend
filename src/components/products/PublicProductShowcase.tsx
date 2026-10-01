@@ -6,6 +6,7 @@ import { ProductDetailsModal } from "@/components/products/ProductDetailsModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import {
+  activateManyProducts,
   deactivateManyProducts,
   deactivateProduct,
   deleteManyProducts,
@@ -123,6 +124,10 @@ export function PublicProductShowcase({ config }: Props) {
           }}
           isAdmin={isAdmin}
           onAddToCart={addToCart}
+          onActivateProduct={async (ids) => {
+            await activateManyProducts(ids);
+            await load();
+          }}
           onDeactivateProduct={async (ids) => {
             await deactivateManyProducts(ids);
             await load();

@@ -25,6 +25,7 @@ type ProductDetailsModalProps = {
     estoque?: number;
   }) => void;
   onDeactivateProduct: (productIds: number[]) => Promise<void>;
+  onActivateProduct: (productIds: number[]) => Promise<void>;
   onDeactivateSize: (productId: number) => Promise<void>;
   onDeleteProduct: (productIds: number[]) => Promise<void>;
 };
@@ -40,6 +41,7 @@ export function ProductDetailsModal({
   isAdmin,
   onAddToCart,
   onDeactivateProduct,
+  onActivateProduct,
   onDeactivateSize,
   onDeleteProduct,
 }: ProductDetailsModalProps) {
@@ -284,8 +286,9 @@ export function ProductDetailsModal({
                         selected
                           ? "border-[var(--color-forest)] bg-[var(--color-forest)] text-white"
                           : "border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:border-[var(--color-forest-mid)]",
-                        !available &&
-                          "cursor-not-allowed border-[var(--color-line)] bg-[var(--color-cream)] text-[var(--color-muted)] opacity-55",
+                        !available && !selected &&
+                          "border-[var(--color-line)] bg-[var(--color-cream)] text-[var(--color-muted)] opacity-55",
+                        !available && !isAdmin && "cursor-not-allowed",
                       )}
                     >
                       {variant.tamanho}{isAdmin && !variant.ativo ? " · Inativo" : ""}
@@ -374,9 +377,27 @@ export function ProductDetailsModal({
                   Ações administrativas
                 </p>
                 <p className="mb-3 text-xs text-[var(--color-muted)]">
-                  Desative tamanhos ou remova o produto do catálogo. Ações podem ser irreversíveis.
+                  Produtos desativados podem ser reativados. Excluir remove o produto do catálogo, inclusive desta lista administrativa.
                 </p>
                 <div className="flex flex-col gap-2">
+                  {product.variantes.some(variant => !variant.ativo) && (
+                    <button type="button" className="btn-secondary" disabled={loadingAction !== null}
+                      onClick={() => void runAdminAction("activate-product", async () => {
+                        await onActivateProduct(activeProduct.variantes.filter(variant => !variant.ativo).map(variant => variant.id));
+                        onClose();
+                      })}>
+                      {loadingAction === "activate-product" ? "Reativando…" : "Reativar produto"}
+                    </button>
+                  )}
+                  {selectedVariant && !selectedVariant.ativo && (
+                    <button type="button" className="btn-secondary" disabled={loadingAction !== null}
+                      onClick={() => void runAdminAction("activate-size", async () => {
+                        await onActivateProduct([selectedVariant.id]);
+                        onClose();
+                      })}>
+                      {loadingAction === "activate-size" ? "Reativando…" : "Reativar tamanho selecionado"}
+                    </button>
+                  )}
                   {selectedVariant && (
                     <Link
                       to="/admin/produtos/$productId"

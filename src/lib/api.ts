@@ -363,6 +363,13 @@ export function deactivateManyProducts(productIds: number[]) {
   });
 }
 
+export function activateManyProducts(productIds: number[]) {
+  return apiRequest<{ message: string; product_ids: number[] }>("/products/activate-many", {
+    method: "PATCH",
+    body: JSON.stringify({ product_ids: productIds }),
+  });
+}
+
 export function deleteManyProducts(productIds: number[]) {
   return apiRequest<{ message: string; product_ids: number[] }>("/products/delete-many", {
     method: "DELETE",

@@ -6,6 +6,7 @@ import { ProductDetailsModal } from "@/components/products/ProductDetailsModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import {
+  activateManyProducts,
   deactivateManyProducts,
   deactivateProduct,
   deleteManyProducts,
@@ -342,6 +343,11 @@ function CatalogoPage() {
           isAdmin={isAdmin}
           onAddToCart={addToCart}
           onDeactivateProduct={handleDeactivateProduct}
+          onActivateProduct={async (ids) => {
+            await activateManyProducts(ids);
+            setBanner("Produto reativado com sucesso.");
+            await loadCatalog();
+          }}
           onDeactivateSize={handleDeactivateSize}
           onDeleteProduct={handleDeleteProduct}
         />
