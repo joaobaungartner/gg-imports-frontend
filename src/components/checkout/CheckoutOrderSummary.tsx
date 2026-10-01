@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { SkeletonValue } from "@/components/ui/Skeleton";
 import type { CartItem } from "@/lib/cart";
 import { formatCurrency } from "@/lib/formatCurrency";
 
@@ -70,10 +70,7 @@ export function CheckoutOrderSummary({
           <dt>Frete</dt>
           <dd className="font-medium text-ink">
             {loadingShipping ? (
-              <span className="inline-flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Calculando...
-              </span>
+              <SkeletonValue label="Calculando frete" />
             ) : shippingMethod === "RETIRADA" ? (
               "Grátis"
             ) : shippingCost > 0 ? (
@@ -90,7 +87,7 @@ export function CheckoutOrderSummary({
           <div className="flex items-center justify-between">
             <dt className="font-semibold text-ink">Total</dt>
             <dd className="font-display text-xl font-bold text-forest">
-              {formatCurrency(orderTotal)}
+              {loadingShipping ? <SkeletonValue label="Calculando total" className="h-7 w-28" /> : formatCurrency(orderTotal)}
             </dd>
           </div>
         </div>

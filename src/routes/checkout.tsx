@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
-import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
+import { initMercadoPago } from "@mercadopago/sdk-react";
+import { CheckoutPageSkeleton, FormSkeleton } from "@/components/checkout/CheckoutSkeletons";
+import { LoadingCardPayment } from "@/components/checkout/LoadingCardPayment";
+import { SkeletonValue } from "@/components/ui/Skeleton";
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
 import { CheckoutStepper, type CheckoutStepDefinition } from "@/components/checkout/CheckoutStepper";
 import { useAuth } from "@/contexts/AuthContext";
@@ -337,14 +340,12 @@ function CheckoutPage() {
   function renderStepContent() {
     switch (currentStep) {
       case 1:
+        if (loadingProfile) return <section className="surface-card p-5 sm:p-6"><FormSkeleton /></section>;
         return (
           <section className="surface-card p-5 sm:p-6">
             <p className="mb-5 text-sm text-muted">
               Seus dados foram preenchidos automaticamente com sua conta.
             </p>
-            {loadingProfile && (
-              <p className="mb-4 text-sm text-muted">Carregando seus dados...</p>
-            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="customerName" className="field-label">
@@ -422,6 +423,7 @@ function CheckoutPage() {
                 </div>
                 {cepError && <p className="mt-1.5 text-xs text-danger">{cepError}</p>}
               </div>
+              {loadingCep ? <div className="sm:col-span-2"><FormSkeleton label="Buscando endereço pelo CEP" fields={7} /></div> : <>
               <div className="sm:col-span-2">
                 <label htmlFor="street" className="field-label">
                   Rua
@@ -494,6 +496,7 @@ function CheckoutPage() {
                   ))}
                 </select>
               </div>
+              </>}
             </div>
           </section>
         );
@@ -519,7 +522,7 @@ function CheckoutPage() {
                     <span className="block text-sm font-semibold text-ink">Entrega</span>
                     <span className="text-sm font-semibold text-forest">
                       {loadingShipping
-                        ? "Calculando..."
+                        ? <SkeletonValue label="Calculando frete" />
                         : shippingCost > 0
                           ? formatCurrency(shippingCost)
                           : "—"}
@@ -678,7 +681,7 @@ function CheckoutPage() {
                   <div className="alert-error mt-4">Configure VITE_MERCADO_PAGO_PUBLIC_KEY para habilitar o cartão.</div>
                 ) : (
                   <div className="mt-4">
-                    <CardPayment
+                    <LoadingCardPayment
                       initialization={{ amount: orderTotal, payer: { email: customerEmail, identification: customerCpf ? { type: "CPF", number: onlyDigits(customerCpf) } : undefined } }}
                       customization={{ paymentMethods: { types: { included: ["credit_card"] } } }}
                       onSubmit={async (formData) => {
@@ -708,9 +711,7 @@ function CheckoutPage() {
 
   if (!isAuthenticated || items.length === 0) {
     return (
-      <div className="container-page flex min-h-[40vh] items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-forest" />
-      </div>
+      <CheckoutPageSkeleton />
     );
   }
 
@@ -768,7 +769,7 @@ function CheckoutPage() {
               <button
                 type="button"
                 onClick={goToNextStep}
-                disabled={loadingProfile || (currentStep === 3 && loadingShipping)}
+                disabled={loadingProfile || (currentStep === 2 && loadingCep) || (currentStep === 3 && loadingShipping)}
                 className="btn-primary sm:ml-auto"
               >
                 Continuar

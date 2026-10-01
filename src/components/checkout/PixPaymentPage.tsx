@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getOrderById, getPaymentByOrder, type OrderResponse, type PaymentResponse } from "@/lib/api";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { formatOrderDateTime } from "@/lib/orderFormat";
+import { PixCodeSkeleton, PixPaymentSkeleton } from "./CheckoutSkeletons";
 
 export function PixPaymentPage({ orderId }: { orderId: number }) {
   const [data, setData] = useState<{ order: OrderResponse; payment: PaymentResponse } | null>(null);
@@ -62,7 +63,7 @@ export function PixPaymentPage({ orderId }: { orderId: number }) {
           <p className="eyebrow">Pagamento do pedido {order && `#${order.id}`}</p>
           <h1 className="editorial-title mt-3 text-3xl sm:text-4xl">{paid ? "Pagamento confirmado!" : "Pague seu pedido com Pix"}</h1>
           {error && <div role="alert" className="alert-error mt-5">{error}<button className="btn-secondary mt-3" onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button></div>}
-          {!data && !error && <p role="status" className="mt-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Carregando pagamento...</p>}
+          {!data && !error && <PixPaymentSkeleton />}
           {order && payment && (
             <section className="surface-card mt-6 p-5 sm:p-8">
               {paid ? (
@@ -85,7 +86,7 @@ export function PixPaymentPage({ orderId }: { orderId: number }) {
                       <textarea id="pix-code" readOnly value={payment.pix_qr_code} className="field-input h-20 resize-none break-all text-xs" onFocus={event => event.target.select()} />
                       {copyError && <p role="alert" className="mt-2 text-sm text-danger">Não foi possível copiar. Selecione e copie o código acima.</p>}
                     </>
-                  ) : <p role="status" className="mt-5">Aguardando o código Pix. Esta página será atualizada automaticamente.</p>}
+                  ) : <><PixCodeSkeleton /><p className="mt-5 text-sm text-muted">Aguardando o código Pix. Esta página será atualizada automaticamente.</p></>}
                   {payment.expires_at && <p className="mt-4 text-sm text-muted">Válido até {formatOrderDateTime(payment.expires_at)}.</p>}
                   <p role="status" className="mt-5 flex items-center gap-2 text-sm text-muted"><Loader2 className="h-4 w-4 animate-spin" />Aguardando pagamento. A confirmação aparecerá aqui automaticamente.</p>
                 </>

@@ -1,5 +1,6 @@
+import { OrderDetailsSkeleton, PixPaymentSkeleton } from "@/components/checkout/CheckoutSkeletons";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, Copy, Loader2, Shirt } from "lucide-react";
+import { CheckCircle2, Copy, Shirt } from "lucide-react";
 import { useEffect, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
@@ -25,6 +26,7 @@ function PedidoConfirmacaoPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadingPayment, setLoadingPayment] = useState(true);
   const [copied, setCopied] = useState(false);
   const [payment, setPayment] = useState<PaymentResponse | null>(null);
 
@@ -49,7 +51,8 @@ function PedidoConfirmacaoPage() {
         }
       })
       .finally(() => setLoading(false));
-    getPaymentByOrder(numericOrderId).then(setPayment).catch(() => undefined);
+    setLoadingPayment(true);
+    getPaymentByOrder(numericOrderId).then(setPayment).catch(() => undefined).finally(() => setLoadingPayment(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh from API on mount/id change
   }, [numericOrderId]);
 
@@ -91,12 +94,7 @@ function PedidoConfirmacaoPage() {
 
   if (loading && !order) {
     return (
-      <div className="section-canvas flex min-h-[50vh] items-center justify-center py-16">
-        <div className="flex flex-col items-center gap-3 text-[var(--color-muted)]">
-          <Loader2 className="h-6 w-6 animate-spin text-[var(--color-forest)]" />
-          <p className="text-sm font-medium">Carregando pedido…</p>
-        </div>
-      </div>
+      <OrderDetailsSkeleton />
     );
   }
 
@@ -197,6 +195,7 @@ function PedidoConfirmacaoPage() {
               </div>
             </section>
 
+            {isPix && order.status === "PENDING_PAYMENT" && loadingPayment && !payment && <PixPaymentSkeleton />}
             {isPix && order.status === "PENDING_PAYMENT" && payment?.pix_qr_code ? (
               <section className="overflow-hidden rounded-[4px] border border-[var(--color-forest)]/20 bg-[var(--color-cream)] p-6">
                 <p className="eyebrow">Pagamento</p>

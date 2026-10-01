@@ -16,6 +16,28 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 async function openPage() { await act(async () => { render(<PixPaymentPage orderId={2} />); }); }
 
+it("shows skeletons only until the first payment response arrives", async () => {
+  let resolvePayment!: (value: unknown) => void;
+  mocks.payment.mockReturnValueOnce(new Promise(resolve => { resolvePayment = resolve; }));
+  await openPage();
+  expect(screen.getByRole("status", { name: "Carregando pagamento" })).toBeTruthy();
+  expect(screen.queryByText("Copiar código Pix")).toBeNull();
+  await act(async () => { resolvePayment({ status: "PENDING", pix_qr_code: "pix-code" }); });
+  expect(screen.queryByRole("status", { name: "Carregando pagamento" })).toBeNull();
+  expect(screen.getByText("Copiar código Pix")).toBeTruthy();
+  mocks.payment.mockReturnValueOnce(new Promise(() => {}));
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
+  expect(screen.getByText("Copiar código Pix")).toBeTruthy();
+  expect(screen.queryByRole("status", { name: "Carregando pagamento" })).toBeNull();
+});
+
+it("replaces initial skeletons with an error when loading fails", async () => {
+  mocks.payment.mockRejectedValue(new Error("offline"));
+  await openPage();
+  expect(screen.getByRole("alert")).toBeTruthy();
+  expect(screen.queryByRole("status", { name: "Carregando pagamento" })).toBeNull();
+});
+
 it("shows the QR code immediately and copies the Pix code", async () => {
   await openPage();
   expect(screen.getByAltText("QR Code para pagamento Pix")).toBeTruthy();

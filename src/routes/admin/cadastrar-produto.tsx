@@ -25,12 +25,19 @@ function CadastrarProdutoPage() {
   const navigate = useNavigate();
   const { isAdmin, isAuthenticated } = useAuth();
   const imagemInputRef = useRef<HTMLInputElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successInfo, setSuccessInfo] = useState<SuccessInfo | null>(null);
+
+  useEffect(() => {
+    if (!successInfo) return;
+    successRef.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [successInfo]);
 
   const [categoryId, setCategoryId] = useState("");
   const [nome, setNome] = useState("");
@@ -236,7 +243,7 @@ function CadastrarProdutoPage() {
           </div>
 
           {successInfo && (
-            <div className="alert-success mb-6" role="status">
+            <div ref={successRef} tabIndex={-1} className="alert-success mb-6" role="status">
               <div className="flex items-start gap-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] bg-[var(--color-forest)] text-white">
                   <CheckCircle2 className="h-5 w-5" />

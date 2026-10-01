@@ -1,3 +1,4 @@
+import { OrderCardSkeleton } from "@/components/checkout/CheckoutSkeletons";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2, PackageSearch, Search } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
@@ -159,11 +160,8 @@ function AcompanharPedidoPage() {
             </div>
           )}
 
-          {loading ? (
-            <div className="surface-card flex flex-col items-center justify-center gap-3 px-6 py-16 text-[var(--color-muted)]">
-              <Loader2 className="h-6 w-6 animate-spin text-[var(--color-forest)]" />
-              <p className="text-sm font-medium">Carregando pedidos…</p>
-            </div>
+          {loading || searching ? (
+            <div className="space-y-4"><OrderCardSkeleton label="Carregando pedidos" />{loading && <OrderCardSkeleton label="Carregando pedidos" />}</div>
           ) : orders.length > 0 ? (
             <div className="space-y-4">
               {orders.map((order) => (
